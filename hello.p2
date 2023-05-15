@@ -1,0 +1,18 @@
+L   3
+ ENT       L   4
+ LCA'HELLO, WORLD'
+ LDCI          12
+ LDCI          12
+ LDA   0       5
+ CSP         WRS
+ LDA   0       5
+I   10
+ CSP         WLN
+ RETP
+L   4=          7
+
+I    0
+ MST           0
+ CUP   0   L   3
+ STP
+
