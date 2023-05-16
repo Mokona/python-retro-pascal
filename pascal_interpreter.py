@@ -1,3 +1,4 @@
+import io
 import sys
 from math import sin, cos, exp, log, sqrt, atan, trunc
 
@@ -315,7 +316,7 @@ def push(registers):
         raise RuntimeError("Store Overflow")
 
 
-def get_stream(registers, stream_id):
+def get_stream(registers, stream_id) -> streams.InputStream | io.IOBase:
     return registers.files[stream_id - INPUTADR]
 
 
@@ -323,7 +324,7 @@ def getfile(registers):
     _, file_id = store[registers.sp]
     _, position = store[file_id]
 
-    value = get_stream(registers, file_id).read(1)
+    value = get_stream(registers, file_id).read()
     store[file_id] = ('INT', value)
     registers.sp -= 1
 
@@ -340,7 +341,7 @@ def readline(registers):
     _, file_id = store[registers.sp]
     stream = get_stream(registers, file_id)
     stream.read_line()
-    value = stream.read(1)
+    value = stream.read()
     store[INPUTADR] = ('INT', value)
     registers.sp -= 1
 
@@ -391,13 +392,14 @@ def write_to_file(registers):
     registers.sp -= 3
 
 
-def read_number(registers, q):
-    _, file_id = store[registers.sp - 1]
-    _, store_addr = store[registers.sp]
+def read_byte(registers, q):
+    _, file_id = store[registers.sp]
+    _, store_addr = store[registers.sp - 1]
 
     stream = get_stream(registers, file_id)
-    value = stream.get_next_number()
-    t = ['INT', 'REEL', 'CHAR'][q - 4]
+
+    t = ['INT', 'REEL', 'CHAR'][q - 11]  # 11 is RDI opcode number
+    value = stream.read()
     store[store_addr] = (t, value)
 
     registers.sp -= 2
@@ -441,7 +443,7 @@ def call_sp(q, registers: "Registers"):
     elif q in (8, 9, 10):  # (*WRI*) (*WRR*) (*WRC*)
         write_to_file(registers)
     elif q in (11, 12, 13):  # (*RDI*) (*RDR*) (*RDC*)
-        read_number(registers, q)
+        read_byte(registers, q)
     elif q == 14:  # (*SIN*)
         _, v = store[registers.sp]
         store[registers.sp] = ('REEL', sin(v))
