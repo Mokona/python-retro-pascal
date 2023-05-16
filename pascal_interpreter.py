@@ -19,7 +19,9 @@ prd_filename = "hello.p2"
 prr_filename = "hello.out"
 
 # Constants
-PCMAX: int = 13470  # (* SIZE OF STORE *)
+
+# PCMAX: int = 13470  # (* SIZE OF STORE *)
+PCMAX: int = 14000  # (* SIZE OF STORE *)
 MAXSTK: int = 13650  # (* SIZE OF VARIABLE STORE *)
 OVERI: int = 13655  # (* SIZE OF INTEGER CONSTANT TABLE = 5 *)
 OVERR: int = 13660  # (* SIZE OF REAL CONSTANT TABLE = 5 *)
