@@ -2,6 +2,7 @@ import io
 import sys
 from math import sin, cos, exp, log, sqrt, atan, trunc
 
+import streams
 import string_buffer
 from streams import InputStream
 
