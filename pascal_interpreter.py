@@ -515,7 +515,8 @@ def ex0(op, p, q, registers):
             raise RuntimeError("Value Undefined")
         store[registers.sp] = store[ad]
     elif op == 10:  # (*INC*)
-        store[registers.sp] = store[registers.sp] + q
+        t, v = store[registers.sp]
+        store[registers.sp] = (t, v + q)
     elif op == 11:  # (*MST*)
         # (*P=LEVEL OF CALLING PROCEDURE MINUS LEVEL OF CALLED PROCEDURE + 1;  SET DL AND SL, INCREMENT SP*)
         store[registers.sp + 1] = ('UNDEF', 0)
