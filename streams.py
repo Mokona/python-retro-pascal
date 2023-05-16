@@ -5,8 +5,8 @@ import io
 import re
 from io import SEEK_END, SEEK_SET
 
-
 re_number = re.compile(r"\s*\d+(?:\.\d+)?")
+
 
 class InputStream:
     def __init__(self, file_id, stream: io.IOBase):
@@ -26,9 +26,15 @@ class InputStream:
         return self.file_id
 
     def read(self):
-        c = self.current_line[self.index_in_line]
-        self.index_in_line += 1
-        return c
+        if not self.eof():
+            if not self.eol():
+                c = self.current_line[self.index_in_line]
+                self.index_in_line += 1
+            else:
+                c = 0
+            return c
+        else:
+            return 0
 
     def eol(self):
         return self.index_in_line == len(self.current_line)
@@ -39,9 +45,9 @@ class InputStream:
 
     def eof(self):
         if self.stream.seekable():
-            return self.stream.tell() == self.size
+            return self.stream.tell() == self.size and self.index_in_line >= len(self.current_line)
         else:
-            return self.stream.closed
+            return self.stream.closed and self.index_in_line >= len(self.current_line)
 
     def read_next_number(self):
         m = re_number.match(self.current_line, self.index_in_line)
