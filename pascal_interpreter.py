@@ -539,9 +539,9 @@ def ex0(op, p, q, registers):
             raise RuntimeError("Store overflow")
         if registers.sp < INPUTADR:
             registers.sp = PRDADR
-            for i in range(registers.sp + 1, j + 1):
-                store[i] = ('UNDEF', 0)
-            registers.sp = j
+        for i in range(registers.sp + 1, j + 1):
+            store[i] = ('UNDEF', 0)
+        registers.sp = j
     elif op == 14:  # (*RET*)
         if p == 0:
             registers.sp = registers.mp - 1
