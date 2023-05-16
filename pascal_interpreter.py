@@ -512,10 +512,12 @@ def ex0(op, p, q, registers):
         push(registers)
         store[registers.sp] = store[q]
     elif op == 9:  # (*IND*)
-        t, ad = store[registers.sp] + q
+        _, adr = store[registers.sp]
+        adr += q
+        t, value = store[adr]
         if t == 'UNDEF':
             raise RuntimeError("Value Undefined")
-        store[registers.sp] = store[ad]
+        store[registers.sp] = (t, value)
     elif op == 10:  # (*INC*)
         t, v = store[registers.sp]
         store[registers.sp] = (t, v + q)
