@@ -147,7 +147,6 @@ def load(prd):
             p = [0, 1, 2, 3, 4, 5]['AIRBSM'.index(ch)]
             if p == 5:
                 q, line = string_buffer.parse_integer(ch + line)
-
         elif op in (0, 2, 4):  # (*LOD,STR,LDA*)
             p, line = string_buffer.parse_integer(ch + line)
             q, line = string_buffer.parse_integer(line)
@@ -204,13 +203,13 @@ def load(prd):
             elif ch == '(':
                 op = 8
                 p = 4
-                s = []
+                s = set()
 
                 while ch != ')':
                     s1, line = string_buffer.parse_integer(line)
-                    ch, line = string_buffer.parse_char(line)
+                    ch = line.strip()[0]
 
-                    s.append(s1)
+                    s.add(s1)
 
                 store[pointers.scp] = ('SET', s)
                 q = OVERR
