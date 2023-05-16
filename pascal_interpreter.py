@@ -584,8 +584,8 @@ def ex1(op, p, q, registers):
     if op == 17:  # (*EQU*)
         registers.sp -= 1
         if p in (0, 1, 2, 3, 4):
-            _, v1 = store[registers.sp + 1]
-            _, v2 = store[registers.sp]
+            _, v1 = store[registers.sp]
+            _, v2 = store[registers.sp + 1]
             store[registers.sp] = ('BOOL', v1 == v2)
         elif p == 5:
             b, _ = compare(registers, q)
@@ -593,8 +593,8 @@ def ex1(op, p, q, registers):
     if op == 18:  # (*NEQ*)
         registers.sp -= 1
         if p in (0, 1, 2, 3, 4):
-            _, v1 = store[registers.sp + 1]
-            _, v2 = store[registers.sp]
+            _, v1 = store[registers.sp]
+            _, v2 = store[registers.sp + 1]
             store[registers.sp] = ('BOOL', v1 != v2)
         elif p == 5:
             b, _ = compare(registers, q)
@@ -602,8 +602,8 @@ def ex1(op, p, q, registers):
     if op == 19:  # (*GEQ*)
         registers.sp -= 1
         if p in (0, 1, 2, 3, 4):
-            _, v1 = store[registers.sp + 1]
-            _, v2 = store[registers.sp]
+            _, v1 = store[registers.sp]
+            _, v2 = store[registers.sp + 1]
             store[registers.sp] = ('BOOL', v1 >= v2)
         elif p == 5:
             b, (i1, i2) = compare(registers, q)
@@ -613,8 +613,8 @@ def ex1(op, p, q, registers):
     if op == 20:  # (*GRT*)
         registers.sp -= 1
         if p in (0, 1, 2, 3, 4):
-            _, v1 = store[registers.sp + 1]
-            _, v2 = store[registers.sp]
+            _, v1 = store[registers.sp]
+            _, v2 = store[registers.sp + 1]
             store[registers.sp] = ('BOOL', v1 > v2)
         elif p == 5:
             b, (i1, i2) = compare(registers, q)
@@ -624,8 +624,8 @@ def ex1(op, p, q, registers):
     if op == 21:  # (*LEQ*)
         registers.sp -= 1
         if p in (0, 1, 2, 3, 4):
-            _, v1 = store[registers.sp + 1]
-            _, v2 = store[registers.sp]
+            _, v1 = store[registers.sp]
+            _, v2 = store[registers.sp + 1]
             store[registers.sp] = ('BOOL', v1 <= v2)
         elif p == 5:
             b, (i1, i2) = compare(registers, q)
@@ -635,8 +635,8 @@ def ex1(op, p, q, registers):
     if op == 22:  # (*LES*)
         registers.sp -= 1
         if p in (0, 1, 2, 3, 4):
-            _, v1 = store[registers.sp + 1]
-            _, v2 = store[registers.sp]
+            _, v1 = store[registers.sp]
+            _, v2 = store[registers.sp + 1]
             store[registers.sp] = ('BOOL', v1 < v2)
         elif p == 5:
             b, (i1, i2) = compare(registers, q)
