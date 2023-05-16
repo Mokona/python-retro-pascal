@@ -382,12 +382,14 @@ def writestr(registers: "Registers"):
     registers.sp -= 4
 
 
-def write_to_file(registers):
+def write_to_file(registers, q):
     _, file_id = store[registers.sp]
-    _, v1 = store[registers.sp - 2]
+    t, v1 = store[registers.sp - 2]
     _, v2 = store[registers.sp - 1]
 
     stream = get_stream(registers, file_id)
+    if q == 10 and t != 'CHAR':
+        v1 = chr(v1)
     stream.write(f"{v1:>{v2}}")
 
     registers.sp -= 3
@@ -442,7 +444,7 @@ def call_sp(q, registers: "Registers"):
     elif q == 7:  # (*ELN*)
         eoln(registers)
     elif q in (8, 9, 10):  # (*WRI*) (*WRR*) (*WRC*)
-        write_to_file(registers)
+        write_to_file(registers, q)
     elif q in (11, 12, 13):  # (*RDI*) (*RDR*) (*RDC*)
         read_byte(registers, q)
     elif q == 14:  # (*SIN*)
