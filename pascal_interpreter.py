@@ -346,7 +346,7 @@ def readline(registers):
 def writeline(registers):
     _, file_id = store[registers.sp]
     stream = get_stream(registers, file_id)
-    stream.writelines([])
+    stream.writelines(["\n"])
     registers.sp -= 1
 
 
