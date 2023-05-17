@@ -407,6 +407,8 @@ def read_byte(context, q):
     value = stream.read()
     if q == 13 and value != 0:
         value = ord(value)
+    if value == 10:
+        value = 13
     context.store[store_addr] = (t, value)
 
     context.sp -= 2
