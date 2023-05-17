@@ -324,7 +324,8 @@ def get_stream(context, stream_id) -> streams.InputStream | io.IOBase:
 
 def getfile(context):
     _, file_id = context.store[context.sp]
-    _, position = context.store[file_id]
+    if file_id in (5, 7):
+        raise RuntimeError("Get on Output. Error")
 
     value = get_stream(context, file_id).read()
     context.store[file_id] = ('INT', value)
