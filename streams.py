@@ -30,9 +30,10 @@ class InputStream:
             if not self.eol():
                 c = self.current_line[self.index_in_line]
                 self.index_in_line += 1
+                return c
             else:
-                c = 0
-            return c
+                self.read_line()
+                return self.read()
         else:
             return 0
 
