@@ -27,21 +27,19 @@ class InputStream:
 
     def read(self):
         if not self.eof():
-            if not self.eol():
-                c = self.current_line[self.index_in_line]
-                self.index_in_line += 1
-                return c
-            else:
+            c = self.current_line[self.index_in_line]
+            self.index_in_line += 1
+            if self.index_in_line == len(self.current_line):
                 self.read_line()
-                return self.read()
+            return c
         else:
             return 0
 
     def eol(self):
-        return self.index_in_line == len(self.current_line)
+        return self.current_line[self.index_in_line] == '\n'
 
     def read_line(self):
-        self.current_line = self.stream.readline().rstrip('\n\r')
+        self.current_line = self.stream.readline()
         self.index_in_line = 0
 
     def eof(self):
