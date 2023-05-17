@@ -66,8 +66,6 @@ class Code:
 
 
 code = [Code() for _ in range(PCMAX)]
-store: list[tuple] = [('UNDEF', None) for _ in range(OVERM)]  # Tuples of (Type, Value)
-
 
 # Types are : INT (VI), REEL (VR), BOOL (VB), SETT (VS), ADR (VA), MARK (VM), UNDEF
 
@@ -80,7 +78,7 @@ class Pointers:
         self.mcp: int = OVERB + 1
 
 
-def load(prd):
+def load(prd, store):
     labeltab = []
     pointers = Pointers()
 
@@ -138,7 +136,7 @@ def load(prd):
         return '', line, lookup(pc, x)
 
     def assemble(ch, line, pc):
-        """TRANSLATE SYMBOLIC CODE INTO MACHINE CODE AND STORE"""
+        """TRANSLATE SYMBOLIC CODE INTO MACHINE CODE AND context.store"""
         nonlocal pointers
 
         name, line, ch = get_name(ch, line)
@@ -175,9 +173,9 @@ def load(prd):
                 i, line = string_buffer.parse_integer(line)
                 if abs(i) > LARGEINT:
                     op = 8
-                    store[pointers.icp] = ('INT', i)
+                    context.store[pointers.icp] = ('INT', i)
                     q = MAXSTK
-                    while store[q][1] != i:
+                    while context.store[q][1] != i:
                         q += 1
                     if q == pointers.icp:
                         pointers.icp += 1
@@ -190,9 +188,9 @@ def load(prd):
                 op = 8
                 p = 2
                 r, line = string_buffer.parse_integer(line)
-                store[pointers.rcp] = ('REEL', r)
+                context.store[pointers.rcp] = ('REEL', r)
                 q = OVERI
-                while store[q][1] != r:
+                while context.store[q][1] != r:
                     q += 1
                 if q == pointers.rcp:
                     pointers.rcp += 1
@@ -215,9 +213,9 @@ def load(prd):
 
                     s.add(s1)
 
-                store[pointers.scp] = ('SET', s)
+                context.store[pointers.scp] = ('SET', s)
                 q = OVERR
-                while store[q][1] != s:
+                while context.store[q][1] != s:
                     q += 1
                 if q == pointers.scp:
                     pointers.scp += 1
@@ -227,10 +225,10 @@ def load(prd):
             lb, line = string_buffer.parse_integer(line)
             ub, line = string_buffer.parse_integer(line)
 
-            store[pointers.bcp - 1] = ('INT', lb)
-            store[pointers.bcp] = ('INT', ub)
+            context.store[pointers.bcp - 1] = ('INT', lb)
+            context.store[pointers.bcp] = ('INT', ub)
             q = OVERS
-            while store[q - 1][1] != lb or store[q][1] != ub:
+            while context.store[q - 1][1] != lb or context.store[q][1] != ub:
                 q += 2
             if q == pointers.bcp:
                 pointers.bcp += 2
@@ -240,7 +238,7 @@ def load(prd):
             ch, line = string_buffer.parse_char(line)
             q = pointers.mcp
             while ch != "'":
-                store[pointers.mcp] = ('INT', ord(ch))
+                context.store[pointers.mcp] = ('INT', ord(ch))
                 pointers.mcp += 1
                 ch = line[0]
                 line = line[1:]
@@ -302,72 +300,72 @@ def load(prd):
     generate(0)  # Inserting start of code (which is at the end of assembly code, after a blank line)
 
 
-def base(registers, ld):
-    ad = registers.mp
+def base(context, ld):
+    ad = context.mp
     while ld > 0:
-        _, mark_value = store[ad + 1]
+        _, mark_value = context.store[ad + 1]
         ad = mark_value
         ld -= 1
     return ad
 
 
-def push(registers):
-    registers.sp += 1
-    if registers.sp > registers.np:
+def push(context):
+    context.sp += 1
+    if context.sp > context.np:
         raise RuntimeError("Store Overflow")
 
 
-def get_stream(registers, stream_id) -> streams.InputStream | io.IOBase:
-    return registers.files[stream_id - INPUTADR]
+def get_stream(context, stream_id) -> streams.InputStream | io.IOBase:
+    return context.files[stream_id - INPUTADR]
 
 
-def getfile(registers):
-    _, file_id = store[registers.sp]
-    _, position = store[file_id]
+def getfile(context):
+    _, file_id = context.store[context.sp]
+    _, position = context.store[file_id]
 
-    value = get_stream(registers, file_id).read()
-    store[file_id] = ('INT', value)
-    registers.sp -= 1
-
-
-def putfile(registers):
-    _, file_id = store[registers.sp]
-    _, value = store[file_id]
-    get_stream(registers, file_id).write(str([value]))
-    store[file_id] = ('UNDEF', 0)
-    registers.sp -= 1
+    value = get_stream(context, file_id).read()
+    context.store[file_id] = ('INT', value)
+    context.sp -= 1
 
 
-def readline(registers):
-    _, file_id = store[registers.sp]
-    stream = get_stream(registers, file_id)
+def putfile(context):
+    _, file_id = context.store[context.sp]
+    _, value = context.store[file_id]
+    get_stream(context, file_id).write(str([value]))
+    context.store[file_id] = ('UNDEF', 0)
+    context.sp -= 1
+
+
+def readline(context):
+    _, file_id = context.store[context.sp]
+    stream = get_stream(context, file_id)
     stream.read_line()
     value = stream.read()
-    store[INPUTADR] = ('INT', value)
-    registers.sp -= 1
+    context.store[INPUTADR] = ('INT', value)
+    context.sp -= 1
 
 
-def writeline(registers):
-    _, file_id = store[registers.sp]
-    stream = get_stream(registers, file_id)
+def writeline(context):
+    _, file_id = context.store[context.sp]
+    stream = get_stream(context, file_id)
     stream.writelines(["\n"])
-    registers.sp -= 1
+    context.sp -= 1
 
 
-def eoln(registers):
-    _, file_id = store[registers.sp]
-    stream = get_stream(registers, file_id)
+def eoln(context):
+    _, file_id = context.store[context.sp]
+    stream = get_stream(context, file_id)
     result = stream.eol()
-    store[registers.sp] = ('BOOL', result)
+    context.store[context.sp] = ('BOOL', result)
 
 
-def writestr(registers: "Registers"):
-    _, file_id = store[registers.sp]
-    stream = get_stream(registers, file_id)
+def writestr(context: "Context"):
+    _, file_id = context.store[context.sp]
+    stream = get_stream(context, file_id)
 
-    _, ad = store[registers.sp - 3]
-    _, k = store[registers.sp - 1]
-    _, j = store[registers.sp - 2]
+    _, ad = context.store[context.sp - 3]
+    _, k = context.store[context.sp - 1]
+    _, j = context.store[context.sp - 2]
 
     if k > j:
         for i in range(k - j):
@@ -376,200 +374,200 @@ def writestr(registers: "Registers"):
         j = k
 
     for i in range(j):
-        _, v = store[ad + i]
+        _, v = context.store[ad + i]
         stream.write(chr(v))
 
-    registers.sp -= 4
+    context.sp -= 4
 
 
-def write_to_file(registers, q):
-    _, file_id = store[registers.sp]
-    t, v1 = store[registers.sp - 2]
-    _, v2 = store[registers.sp - 1]
+def write_to_file(context, q):
+    _, file_id = context.store[context.sp]
+    t, v1 = context.store[context.sp - 2]
+    _, v2 = context.store[context.sp - 1]
 
-    stream = get_stream(registers, file_id)
+    stream = get_stream(context, file_id)
     if q == 10 and t != 'CHAR':
         v1 = chr(v1)
     stream.write(f"{v1:>{v2}}")
 
-    registers.sp -= 3
+    context.sp -= 3
 
 
-def read_byte(registers, q):
-    _, file_id = store[registers.sp]
-    _, store_addr = store[registers.sp - 1]
+def read_byte(context, q):
+    _, file_id = context.store[context.sp]
+    _, store_addr = context.store[context.sp - 1]
 
-    stream = get_stream(registers, file_id)
+    stream = get_stream(context, file_id)
 
     t = ['INT', 'REEL', 'INT'][q - 11]  # 11 is RDI opcode number / RDC reads byte as INTs
     value = stream.read()
     if q == 13 and value != 0:
         value = ord(value)
-    store[store_addr] = (t, value)
+    context.store[store_addr] = (t, value)
 
-    registers.sp -= 2
-
-
-def file_eof(registers):
-    _, file_id = store[registers.sp]
-    stream = get_stream(registers, file_id)
-    store[registers.sp] = ('BOOL', stream.eof())
+    context.sp -= 2
 
 
-def call_sp(q, registers: "Registers"):
+def file_eof(context):
+    _, file_id = context.store[context.sp]
+    stream = get_stream(context, file_id)
+    context.store[context.sp] = ('BOOL', stream.eof())
+
+
+def call_sp(q, context: "Context"):
     if q == 0:  # (*GET*)
-        getfile(registers)
+        getfile(context)
     elif q == 1:  # (*PUT*)
-        putfile(registers)
+        putfile(context)
     elif q == 2:  # (*RST*)
-        _, value = store[registers.sp]
-        registers.np = value
-        registers.sp -= 1
+        _, value = context.store[context.sp]
+        context.np = value
+        context.sp -= 1
     elif q == 3:  # (*RLN*)
-        readline(registers)
+        readline(context)
     elif q == 4:  # (*NEW*)
-        _, adr = store[registers.sp]
-        ad = registers.np - adr
-        if ad <= registers.sp:
+        _, adr = context.store[context.sp]
+        ad = context.np - adr
+        if ad <= context.sp:
             raise RuntimeError("Store Overflow")
-        for i in range(registers.np - 1, ad, -1):
-            store[i] = ('UNDEF', 0)
-        registers.np = ad
-        _, ad = store[registers.sp - 1]
-        store[ad] = ('ADR', registers.np)
-        registers.sp -= 2
+        for i in range(context.np - 1, ad, -1):
+            context.store[i] = ('UNDEF', 0)
+        context.np = ad
+        _, ad = context.store[context.sp - 1]
+        context.store[ad] = ('ADR', context.np)
+        context.sp -= 2
     elif q == 5:  # (*WLN*)
-        writeline(registers)
+        writeline(context)
     elif q == 6:  # (*WRS*)
-        writestr(registers)
-        registers.sp -= 1
+        writestr(context)
+        context.sp -= 1
     elif q == 7:  # (*ELN*)
-        eoln(registers)
+        eoln(context)
     elif q in (8, 9, 10):  # (*WRI*) (*WRR*) (*WRC*)
-        write_to_file(registers, q)
+        write_to_file(context, q)
     elif q in (11, 12, 13):  # (*RDI*) (*RDR*) (*RDC*)
-        read_byte(registers, q)
+        read_byte(context, q)
     elif q == 14:  # (*SIN*)
-        _, v = store[registers.sp]
-        store[registers.sp] = ('REEL', sin(v))
+        _, v = context.store[context.sp]
+        context.store[context.sp] = ('REEL', sin(v))
     elif q == 15:  # (*COS*)
-        _, v = store[registers.sp]
-        store[registers.sp] = ('REEL', cos(v))
+        _, v = context.store[context.sp]
+        context.store[context.sp] = ('REEL', cos(v))
     elif q == 16:  # (*EXP*)
-        _, v = store[registers.sp]
-        store[registers.sp] = ('REEL', exp(v))
+        _, v = context.store[context.sp]
+        context.store[context.sp] = ('REEL', exp(v))
     elif q == 17:  # (*LOG*)
-        _, v = store[registers.sp]
-        store[registers.sp] = ('REEL', log(v))
+        _, v = context.store[context.sp]
+        context.store[context.sp] = ('REEL', log(v))
     elif q == 18:  # (*SQT*)
-        _, v = store[registers.sp]
-        store[registers.sp] = ('REEL', sqrt(v))
+        _, v = context.store[context.sp]
+        context.store[context.sp] = ('REEL', sqrt(v))
     elif q == 19:  # (*ATN*)
-        _, v = store[registers.sp]
-        store[registers.sp] = ('REEL', atan(v))
+        _, v = context.store[context.sp]
+        context.store[context.sp] = ('REEL', atan(v))
     elif q == 20:  # (*SAV*)
-        _, addr = store[registers.sp]
-        store[addr] = ('ADR', registers.np)
-        registers.sp -= 1
+        _, addr = context.store[context.sp]
+        context.store[addr] = ('ADR', context.np)
+        context.sp -= 1
 
 
-def ex0(op, p, q, registers):
+def ex0(op, p, q, context):
     if op == 0:  # (*LOD*)
-        ad = base(registers, p) + q
-        t, v = store[ad]
+        ad = base(context, p) + q
+        t, v = context.store[ad]
         if t == 'UNDEF':
             raise RuntimeError("Value Undefined")
-        push(registers)
-        store[registers.sp] = store[ad]
+        push(context)
+        context.store[context.sp] = context.store[ad]
     elif op == 1:  # (*LDO*)
-        t, v = store[q]
+        t, v = context.store[q]
         if t == 'UNDEF':
             raise RuntimeError("Value Undefined")
-        push(registers)
-        store[registers.sp] = t, v
+        push(context)
+        context.store[context.sp] = t, v
     elif op == 2:  # (*STR*)
-        t, v = store[registers.sp]
-        store[base(registers, p) + q] = t, v
-        registers.sp -= 1
+        t, v = context.store[context.sp]
+        context.store[base(context, p) + q] = t, v
+        context.sp -= 1
     elif op == 3:  # (*SRO*)
-        t, v = store[registers.sp]
-        store[q] = t, v
-        registers.sp -= 1
+        t, v = context.store[context.sp]
+        context.store[q] = t, v
+        context.sp -= 1
     elif op == 4:  # (*LDA*)
-        push(registers)
-        store[registers.sp] = ('ADR', base(registers, p) + q)
+        push(context)
+        context.store[context.sp] = ('ADR', base(context, p) + q)
     elif op == 5:  # (*LAO*)
-        push(registers)
-        store[registers.sp] = ('ADR', q)
+        push(context)
+        context.store[context.sp] = ('ADR', q)
     elif op == 6:  # (*STO*)
-        _, adr = store[registers.sp - 1]
-        store[adr] = store[registers.sp]
-        registers.sp -= 2
+        _, adr = context.store[context.sp - 1]
+        context.store[adr] = context.store[context.sp]
+        context.sp -= 2
     elif op == 7:  # (*LDC*)
-        push(registers)
+        push(context)
         if p == 1:
-            store[registers.sp] = ('INT', q)
+            context.store[context.sp] = ('INT', q)
         elif p == 3:
-            store[registers.sp] = ('BOOL', q == 1)
+            context.store[context.sp] = ('BOOL', q == 1)
         else:
-            store[registers.sp] = ('ADR', MAXSTR)
+            context.store[context.sp] = ('ADR', MAXSTR)
     elif op == 8:  # (*LCI*)
-        push(registers)
-        store[registers.sp] = store[q]
+        push(context)
+        context.store[context.sp] = context.store[q]
     elif op == 9:  # (*IND*)
-        _, adr = store[registers.sp]
+        _, adr = context.store[context.sp]
         adr += q
-        t, value = store[adr]
+        t, value = context.store[adr]
         if t == 'UNDEF':
             raise RuntimeError("Value Undefined")
-        store[registers.sp] = (t, value)
+        context.store[context.sp] = (t, value)
     elif op == 10:  # (*INC*)
-        t, v = store[registers.sp]
-        store[registers.sp] = (t, v + q)
+        t, v = context.store[context.sp]
+        context.store[context.sp] = (t, v + q)
     elif op == 11:  # (*MST*)
         # (*P=LEVEL OF CALLING PROCEDURE MINUS LEVEL OF CALLED PROCEDURE + 1;  SET DL AND SL, INCREMENT SP*)
-        store[registers.sp + 1] = ('UNDEF', 0)
-        store[registers.sp + 2] = ('MARK', base(registers, p))
-        store[registers.sp + 3] = ('MARK', registers.mp)
-        store[registers.sp + 4] = ('UNDEF', 0)
-        registers.sp += 4
+        context.store[context.sp + 1] = ('UNDEF', 0)
+        context.store[context.sp + 2] = ('MARK', base(context, p))
+        context.store[context.sp + 3] = ('MARK', context.mp)
+        context.store[context.sp + 4] = ('UNDEF', 0)
+        context.sp += 4
     elif op == 12:  # (*CUP*)
         # (*P=NO OF LOCATIONS FOR PARAMETERS, Q=ENTRY POINT*)
-        registers.mp = registers.sp - (p + 3)
-        store[registers.mp + 3] = ('MARK', registers.pc)
-        registers.pc = q
+        context.mp = context.sp - (p + 3)
+        context.store[context.mp + 3] = ('MARK', context.pc)
+        context.pc = q
     elif op == 13:  # (*ENT*)
-        j = registers.mp + q
-        if j > registers.np:
+        j = context.mp + q
+        if j > context.np:
             raise RuntimeError("Store overflow")
-        if registers.sp < INPUTADR:
-            registers.sp = PRDADR
-        for i in range(registers.sp + 1, j + 1):
-            store[i] = ('UNDEF', 0)
-        registers.sp = j
+        if context.sp < INPUTADR:
+            context.sp = PRDADR
+        for i in range(context.sp + 1, j + 1):
+            context.store[i] = ('UNDEF', 0)
+        context.sp = j
     elif op == 14:  # (*RET*)
         if p == 0:
-            registers.sp = registers.mp - 1
+            context.sp = context.mp - 1
         else:
-            registers.sp = registers.mp
-        _, pc = store[registers.mp + 3]
-        _, mp = store[registers.mp + 2]
-        registers.pc = pc
-        registers.mp = mp
+            context.sp = context.mp
+        _, pc = context.store[context.mp + 3]
+        _, mp = context.store[context.mp + 2]
+        context.pc = pc
+        context.mp = mp
     elif op == 15:  # (*CSP*)
-        call_sp(q, registers)
+        call_sp(q, context)
 
     return True
 
 
-def compare(registers, q):
-    _, adr1 = store[registers.sp + 1]
-    _, adr2 = store[registers.sp]
+def compare(context, q):
+    _, adr1 = context.store[context.sp + 1]
+    _, adr2 = context.store[context.sp]
     i = 0
     b = True
     while b and i != q:
-        _, v1 = store[adr1 + i]
-        _, v2 = store[adr2 + i]
+        _, v1 = context.store[adr1 + i]
+        _, v2 = context.store[adr2 + i]
         if v1 == v2:
             i += 1
         else:
@@ -577,279 +575,284 @@ def compare(registers, q):
     return b, (adr1 + i, adr2 + i)
 
 
-def ex1(op, p, q, registers):
+def ex1(op, p, q, context):
     if op == 16:  # (*IXA*)
-        registers.sp -= 1
-        _, adr1 = store[registers.sp + 1]
-        _, adr2 = store[registers.sp]
-        store[registers.sp] = ('ADR', q * adr1 + adr2)
+        context.sp -= 1
+        _, adr1 = context.store[context.sp + 1]
+        _, adr2 = context.store[context.sp]
+        context.store[context.sp] = ('ADR', q * adr1 + adr2)
     if op == 17:  # (*EQU*)
-        registers.sp -= 1
+        context.sp -= 1
         if p in (0, 1, 2, 3, 4):
-            _, v1 = store[registers.sp]
-            _, v2 = store[registers.sp + 1]
-            store[registers.sp] = ('BOOL', v1 == v2)
+            _, v1 = context.store[context.sp]
+            _, v2 = context.store[context.sp + 1]
+            context.store[context.sp] = ('BOOL', v1 == v2)
         elif p == 5:
-            b, _ = compare(registers, q)
-            store[registers.sp] = ('BOOL', b)
+            b, _ = compare(context, q)
+            context.store[context.sp] = ('BOOL', b)
     if op == 18:  # (*NEQ*)
-        registers.sp -= 1
+        context.sp -= 1
         if p in (0, 1, 2, 3, 4):
-            _, v1 = store[registers.sp]
-            _, v2 = store[registers.sp + 1]
-            store[registers.sp] = ('BOOL', v1 != v2)
+            _, v1 = context.store[context.sp]
+            _, v2 = context.store[context.sp + 1]
+            context.store[context.sp] = ('BOOL', v1 != v2)
         elif p == 5:
-            b, _ = compare(registers, q)
-            store[registers.sp] = ('BOOL', not b)
+            b, _ = compare(context, q)
+            context.store[context.sp] = ('BOOL', not b)
     if op == 19:  # (*GEQ*)
-        registers.sp -= 1
+        context.sp -= 1
         if p in (0, 1, 2, 3, 4):
-            _, v1 = store[registers.sp]
-            _, v2 = store[registers.sp + 1]
-            store[registers.sp] = ('BOOL', v1 >= v2)
+            _, v1 = context.store[context.sp]
+            _, v2 = context.store[context.sp + 1]
+            context.store[context.sp] = ('BOOL', v1 >= v2)
         elif p == 5:
-            b, (i1, i2) = compare(registers, q)
-            _, v1 = store[i1]
-            _, v2 = store[i2]
-            store[registers.sp] = ('BOOL', v1 >= v2 or b)
+            b, (i1, i2) = compare(context, q)
+            _, v1 = context.store[i1]
+            _, v2 = context.store[i2]
+            context.store[context.sp] = ('BOOL', v1 >= v2 or b)
     if op == 20:  # (*GRT*)
-        registers.sp -= 1
+        context.sp -= 1
         if p in (0, 1, 2, 3, 4):
-            _, v1 = store[registers.sp]
-            _, v2 = store[registers.sp + 1]
-            store[registers.sp] = ('BOOL', v1 > v2)
+            _, v1 = context.store[context.sp]
+            _, v2 = context.store[context.sp + 1]
+            context.store[context.sp] = ('BOOL', v1 > v2)
         elif p == 5:
-            b, (i1, i2) = compare(registers, q)
-            _, v1 = store[i1]
-            _, v2 = store[i2]
-            store[registers.sp] = ('BOOL', v1 > v2 and not b)
+            b, (i1, i2) = compare(context, q)
+            _, v1 = context.store[i1]
+            _, v2 = context.store[i2]
+            context.store[context.sp] = ('BOOL', v1 > v2 and not b)
     if op == 21:  # (*LEQ*)
-        registers.sp -= 1
+        context.sp -= 1
         if p in (0, 1, 2, 3, 4):
-            _, v1 = store[registers.sp]
-            _, v2 = store[registers.sp + 1]
-            store[registers.sp] = ('BOOL', v1 <= v2)
+            _, v1 = context.store[context.sp]
+            _, v2 = context.store[context.sp + 1]
+            context.store[context.sp] = ('BOOL', v1 <= v2)
         elif p == 5:
-            b, (i1, i2) = compare(registers, q)
-            _, v1 = store[i1]
-            _, v2 = store[i2]
-            store[registers.sp] = ('BOOL', v1 <= v2 or b)
+            b, (i1, i2) = compare(context, q)
+            _, v1 = context.store[i1]
+            _, v2 = context.store[i2]
+            context.store[context.sp] = ('BOOL', v1 <= v2 or b)
     if op == 22:  # (*LES*)
-        registers.sp -= 1
+        context.sp -= 1
         if p in (0, 1, 2, 3, 4):
-            _, v1 = store[registers.sp]
-            _, v2 = store[registers.sp + 1]
-            store[registers.sp] = ('BOOL', v1 < v2)
+            _, v1 = context.store[context.sp]
+            _, v2 = context.store[context.sp + 1]
+            context.store[context.sp] = ('BOOL', v1 < v2)
         elif p == 5:
-            b, (i1, i2) = compare(registers, q)
-            _, v1 = store[i1]
-            _, v2 = store[i2]
-            store[registers.sp] = ('BOOL', v1 < v2 and not b)
+            b, (i1, i2) = compare(context, q)
+            _, v1 = context.store[i1]
+            _, v2 = context.store[i2]
+            context.store[context.sp] = ('BOOL', v1 < v2 and not b)
     if op == 23:  # (*UJP*)
-        registers.pc = q
+        context.pc = q
     if op == 24:  # (*FJP*)
-        _, b = store[registers.sp]
+        _, b = context.store[context.sp]
         if not b:
-            registers.pc = q
-        registers.sp -= 1
+            context.pc = q
+        context.sp -= 1
     if op == 25:  # (*XJP*)
-        _, v = store[registers.sp]
-        registers.pc = v + q
-        registers.sp -= 1
+        _, v = context.store[context.sp]
+        context.pc = v + q
+        context.sp -= 1
     if op == 26:  # (*CHK*)
-        _, v1 = store[registers.sp]
-        _, v2 = store[q - 1]
-        _, v3 = store[q]
+        _, v1 = context.store[context.sp]
+        _, v2 = context.store[q - 1]
+        _, v3 = context.store[q]
         if v1 < v2 or v1 > v3:
             raise RuntimeError("Value out of range")
     if op == 27:  # (*EOF*)
-        file_eof(registers)
+        file_eof(context)
     if op == 28:  # (*ADI*)
-        registers.sp -= 1
-        _, v1 = store[registers.sp]
-        _, v2 = store[registers.sp + 1]
-        store[registers.sp] = ('INT', v1 + v2)
+        context.sp -= 1
+        _, v1 = context.store[context.sp]
+        _, v2 = context.store[context.sp + 1]
+        context.store[context.sp] = ('INT', v1 + v2)
     if op == 29:  # (*ADR*)
-        registers.sp -= 1
-        _, v1 = store[registers.sp]
-        _, v2 = store[registers.sp + 1]
-        store[registers.sp] = ('REEL', v1 + v2)
+        context.sp -= 1
+        _, v1 = context.store[context.sp]
+        _, v2 = context.store[context.sp + 1]
+        context.store[context.sp] = ('REEL', v1 + v2)
     if op == 30:  # (*SBI*)
-        registers.sp -= 1
-        _, v1 = store[registers.sp]
-        _, v2 = store[registers.sp + 1]
-        store[registers.sp] = ('INT', v1 - v2)
+        context.sp -= 1
+        _, v1 = context.store[context.sp]
+        _, v2 = context.store[context.sp + 1]
+        context.store[context.sp] = ('INT', v1 - v2)
     if op == 31:  # (*SBR*)
-        registers.sp -= 1
-        _, v1 = store[registers.sp]
-        _, v2 = store[registers.sp + 1]
-        store[registers.sp] = ('REEL', v1 - v2)
+        context.sp -= 1
+        _, v1 = context.store[context.sp]
+        _, v2 = context.store[context.sp + 1]
+        context.store[context.sp] = ('REEL', v1 - v2)
 
     return True
 
 
-def ex2(op, p, q, registers):
+def ex2(op, p, q, context):
     if op == 32:  # (*SGS*)
-        _, v = store[registers.sp]
-        store[registers.sp] = ('SETT', v)
+        _, v = context.store[context.sp]
+        context.store[context.sp] = ('SETT', v)
     if op == 33:  # (*FLT*)
-        _, v = store[registers.sp]
-        store[registers.sp] = ('REEL', v)
+        _, v = context.store[context.sp]
+        context.store[context.sp] = ('REEL', v)
     if op == 34:  # (*FLO*)
-        _, v = store[registers.sp - 1]
-        store[registers.sp - 1] = ('REEL', v)
+        _, v = context.store[context.sp - 1]
+        context.store[context.sp - 1] = ('REEL', v)
     if op == 35:  # (*TRC*)
-        _, v = store[registers.sp]
-        store[registers.sp] = ('INT', int(trunc(v)))
+        _, v = context.store[context.sp]
+        context.store[context.sp] = ('INT', int(trunc(v)))
     if op == 36:  # (*NGI*)
-        _, v = store[registers.sp]
-        store[registers.sp] = ('INT', -v)
+        _, v = context.store[context.sp]
+        context.store[context.sp] = ('INT', -v)
     if op == 37:  # (*NGR*)
-        _, v = store[registers.sp]
-        store[registers.sp] = ('REEL', -v)
+        _, v = context.store[context.sp]
+        context.store[context.sp] = ('REEL', -v)
     if op == 38:  # (*SQI*)
-        _, v = store[registers.sp]
-        store[registers.sp] = ('INT', v * v)
+        _, v = context.store[context.sp]
+        context.store[context.sp] = ('INT', v * v)
     if op == 39:  # (*SQR*)
-        _, v = store[registers.sp]
-        store[registers.sp] = ('REEL', v * v)
+        _, v = context.store[context.sp]
+        context.store[context.sp] = ('REEL', v * v)
     if op == 40:  # (*ABI*)
-        _, v = store[registers.sp]
-        store[registers.sp] = ('INT', abs(v))
+        _, v = context.store[context.sp]
+        context.store[context.sp] = ('INT', abs(v))
     if op == 41:  # (*ABR*)
-        _, v = store[registers.sp]
-        store[registers.sp] = ('REEL', abs(v))
+        _, v = context.store[context.sp]
+        context.store[context.sp] = ('REEL', abs(v))
     if op == 42:  # (*NOT*)
-        _, v = store[registers.sp]
-        store[registers.sp] = ('BOOL', not v)
+        _, v = context.store[context.sp]
+        context.store[context.sp] = ('BOOL', not v)
     if op == 43:  # (*AND*)
-        registers.sp -= 1
-        _, v1 = store[registers.sp]
-        _, v2 = store[registers.sp + 1]
-        store[registers.sp] = ('BOOL', v1 and v2)
+        context.sp -= 1
+        _, v1 = context.store[context.sp]
+        _, v2 = context.store[context.sp + 1]
+        context.store[context.sp] = ('BOOL', v1 and v2)
     if op == 44:  # (*IOR*)
-        registers.sp -= 1
-        _, v1 = store[registers.sp]
-        _, v2 = store[registers.sp + 1]
-        store[registers.sp] = ('BOOL', v1 or v2)
+        context.sp -= 1
+        _, v1 = context.store[context.sp]
+        _, v2 = context.store[context.sp + 1]
+        context.store[context.sp] = ('BOOL', v1 or v2)
     if op == 45:  # (*DIF*)
-        registers.sp -= 1
-        _, v1 = store[registers.sp]
-        _, v2 = store[registers.sp + 1]
-        store[registers.sp] = ('SETT', v1.difference(v2))
+        context.sp -= 1
+        _, v1 = context.store[context.sp]
+        _, v2 = context.store[context.sp + 1]
+        context.store[context.sp] = ('SETT', v1.difference(v2))
     if op == 46:  # (*INT*)
-        registers.sp -= 1
-        _, v1 = store[registers.sp]
-        _, v2 = store[registers.sp + 1]
-        store[registers.sp] = ('BOOL', v1.intersection(v2))
+        context.sp -= 1
+        _, v1 = context.store[context.sp]
+        _, v2 = context.store[context.sp + 1]
+        context.store[context.sp] = ('BOOL', v1.intersection(v2))
     if op == 47:  # (*UNI*)
-        registers.sp -= 1
-        _, v1 = store[registers.sp]
-        _, v2 = store[registers.sp + 1]
-        store[registers.sp] = ('BOOL', v1.union(v2))
+        context.sp -= 1
+        _, v1 = context.store[context.sp]
+        _, v2 = context.store[context.sp + 1]
+        context.store[context.sp] = ('BOOL', v1.union(v2))
 
     return True
 
 
-def ex3(op, p, q, registers):
+def ex3(op, p, q, context):
     if op == 48:  # (*INN*)
-        registers.sp -= 1
-        _, int_value = store[registers.sp]
-        _, set_value = store[registers.sp + 1]
-        store[registers.sp] = ('BOOL', int_value in set_value)
+        context.sp -= 1
+        _, int_value = context.store[context.sp]
+        _, set_value = context.store[context.sp + 1]
+        context.store[context.sp] = ('BOOL', int_value in set_value)
     elif op == 49:  # (*MOD*)
-        registers.sp -= 1
-        _, a_value = store[registers.sp]
-        _, b_value = store[registers.sp + 1]
-        store[registers.sp] = ('INT', a_value % b_value)
+        context.sp -= 1
+        _, a_value = context.store[context.sp]
+        _, b_value = context.store[context.sp + 1]
+        context.store[context.sp] = ('INT', a_value % b_value)
     elif op == 50:  # (*ODD*)
-        _, a_value = store[registers.sp]
-        store[registers.sp] = ('BOOL', (a_value % 2) > 0)
+        _, a_value = context.store[context.sp]
+        context.store[context.sp] = ('BOOL', (a_value % 2) > 0)
     elif op == 51:  # (*MPI*)
-        registers.sp -= 1
-        _, a_value = store[registers.sp]
-        _, b_value = store[registers.sp + 1]
-        store[registers.sp] = ('INT', a_value * b_value)
+        context.sp -= 1
+        _, a_value = context.store[context.sp]
+        _, b_value = context.store[context.sp + 1]
+        context.store[context.sp] = ('INT', a_value * b_value)
     elif op == 52:  # (*MPR*)
-        registers.sp -= 1
-        _, a_value = store[registers.sp]
-        _, b_value = store[registers.sp + 1]
-        store[registers.sp] = ('REEL', a_value * b_value)
+        context.sp -= 1
+        _, a_value = context.store[context.sp]
+        _, b_value = context.store[context.sp + 1]
+        context.store[context.sp] = ('REEL', a_value * b_value)
     elif op == 53:  # (*DVI*)
-        registers.sp -= 1
-        _, a_value = store[registers.sp]
-        _, b_value = store[registers.sp + 1]
-        store[registers.sp] = ('INT', a_value // b_value)
+        context.sp -= 1
+        _, a_value = context.store[context.sp]
+        _, b_value = context.store[context.sp + 1]
+        context.store[context.sp] = ('INT', a_value // b_value)
     elif op == 54:  # (*DVR*)
-        registers.sp -= 1
-        _, a_value = store[registers.sp]
-        _, b_value = store[registers.sp + 1]
-        store[registers.sp] = ('REEL', a_value / b_value)
+        context.sp -= 1
+        _, a_value = context.store[context.sp]
+        _, b_value = context.store[context.sp + 1]
+        context.store[context.sp] = ('REEL', a_value / b_value)
     elif op == 55:  # (*MOV*)
-        _, i1_value = store[registers.sp - 1]
-        _, i2_value = store[registers.sp]
-        registers.sp -= 2
+        _, i1_value = context.store[context.sp - 1]
+        _, i2_value = context.store[context.sp]
+        context.sp -= 2
         for i in range(q):
-            store[i1_value + i] = store[i2_value + i]
+            context.store[i1_value + i] = context.store[i2_value + i]
     elif op == 56:  # (*LCA*)
-        registers.sp += 1
-        if registers.sp >= registers.np:
+        context.sp += 1
+        if context.sp >= context.np:
             raise RuntimeError("Store overflow")
-        store[registers.sp] = ('ADR', q)
+        context.store[context.sp] = ('ADR', q)
     elif op == 57:  # (*DEC*)
-        _, value = store[registers.sp]
-        store[registers.sp] = ('INT', value - q)
+        _, value = context.store[context.sp]
+        context.store[context.sp] = ('INT', value - q)
     if op == 58:  # (*STP*)
         return False
 
     return True
 
 
-class Registers:
-    def __init__(self, input_stream, output_stream, input_file, output_file):
+class Context:
+    def __init__(self, input_stream, output_stream, input_file, output_file, store):
         self.pc = 0
         self.mp = 0  # Beginning of Data segment
         self.sp = -1  # Top of Stack
         self.np = MAXSTK + 1  # Dynamically allocated Area
 
         self.files = [input_stream, output_stream, input_file, output_file]
+        self.store = store
 
 
-def interpret(input_stream, output_stream, input_file, output_file):
-    registers = Registers(input_stream, output_stream, input_file, output_file)
+def interpret(input_stream, output_stream, input_file, output_file, context):
+    context = Context(input_stream, output_stream, input_file, output_file, context)
 
-    store[INPUTADR] = ('INT', 0)
-    store[PRDADR] = ('INT', 0)
-    store[OUTPUTADR] = ('UNDEF', 0)
-    store[PRRADR] = ('UNDEF', 0)
+    context.store[INPUTADR] = ('INT', 0)
+    context.store[PRDADR] = ('INT', 0)
+    context.store[OUTPUTADR] = ('UNDEF', 0)
+    context.store[PRRADR] = ('UNDEF', 0)
 
     interpreting = True
     while interpreting:
-        c = code[registers.pc]
+        c = code[context.pc]
         op = c.op
         p = c.p
         q = c.q
 
-        registers.pc += 1
+        # print(f"{context.pc} {instructions[op]}, {p}, {q}, {context.store[context.sp - 3:context.sp + 3]}")
+
+        context.pc += 1
 
         split_op = op // 16
 
         if split_op == 0:
-            interpreting = ex0(op, p, q, registers)
+            interpreting = ex0(op, p, q, context)
         elif split_op == 1:
-            interpreting = ex1(op, p, q, registers)
+            interpreting = ex1(op, p, q, context)
         elif split_op == 2:
-            interpreting = ex2(op, p, q, registers)
+            interpreting = ex2(op, p, q, context)
         else:
-            interpreting = ex3(op, p, q, registers)
+            interpreting = ex3(op, p, q, context)
 
 
 def main():
+    store: list[tuple] = [('UNDEF', None) for _ in range(OVERM)]  # Tuples of (Type, Value)
+
     with open(prd_filename) as prd:
-        load(prd)
+        load(prd, store)
         with open(prr_filename, "w") as prr:
             input_stream = InputStream(4, sys.stdin)
-            interpret(input_stream, sys.stdout, prd, prr)
+            interpret(input_stream, sys.stdout, prd, prr, store)
 
 
 if __name__ == '__main__':
