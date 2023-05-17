@@ -667,22 +667,22 @@ def ex1(op, p, q, registers):
     if op == 28:  # (*ADI*)
         registers.sp -= 1
         _, v1 = store[registers.sp]
-        _, v2 = store[registers.sp]
+        _, v2 = store[registers.sp + 1]
         store[registers.sp] = ('INT', v1 + v2)
     if op == 29:  # (*ADR*)
         registers.sp -= 1
         _, v1 = store[registers.sp]
-        _, v2 = store[registers.sp]
+        _, v2 = store[registers.sp + 1]
         store[registers.sp] = ('REEL', v1 + v2)
     if op == 30:  # (*SBI*)
         registers.sp -= 1
         _, v1 = store[registers.sp]
-        _, v2 = store[registers.sp]
+        _, v2 = store[registers.sp + 1]
         store[registers.sp] = ('INT', v1 - v2)
     if op == 31:  # (*SBR*)
         registers.sp -= 1
         _, v1 = store[registers.sp]
-        _, v2 = store[registers.sp]
+        _, v2 = store[registers.sp + 1]
         store[registers.sp] = ('REEL', v1 - v2)
 
     return True
