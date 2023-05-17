@@ -152,7 +152,7 @@ def load(prd, store):
         if op in (17, 18, 19, 20, 21, 22):  # (*EQU,NEQ,GEQ,GRT,LEQ,LES*)
             p = [0, 1, 2, 3, 4, 5]['AIRBSM'.index(ch)]
             if p == 5:
-                q, line = string_buffer.parse_integer(ch + line)
+                q, line = string_buffer.parse_integer(line)
         elif op in (0, 2, 4):  # (*LOD,STR,LDA*)
             p, line = string_buffer.parse_integer(ch + line)
             q, line = string_buffer.parse_integer(line)
@@ -564,8 +564,8 @@ def ex0(op, p, q, context):
 
 
 def compare(context, q):
-    _, adr1 = context.store[context.sp + 1]
-    _, adr2 = context.store[context.sp]
+    _, adr1 = context.store[context.sp]
+    _, adr2 = context.store[context.sp + 1]
     i = 0
     b = True
     while b and i != q:
