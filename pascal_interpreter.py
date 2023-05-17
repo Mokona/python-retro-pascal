@@ -25,9 +25,9 @@ prr_filename = "test.out"
 
 # Constants
 
-# PCMAX: int = 13470  # (* SIZE OF STORE *)
-PCMAX: int = 14000  # (* SIZE OF STORE *)
-MAXSTK: int = 13650  # (* SIZE OF VARIABLE STORE *)
+# PCMAX: int = 13470  # (* SIZE OF context.store *)
+PCMAX: int = 15000  # (* SIZE OF context.store *)
+MAXSTK: int = 13650  # (* SIZE OF VARIABLE context.store *)
 OVERI: int = MAXSTK + 5  # (* SIZE OF INTEGER CONSTANT TABLE = 5 *)
 OVERR: int = OVERI + 5  # (* SIZE OF REAL CONSTANT TABLE = 5 *)
 OVERS: int = OVERR + 70  # (* SIZE OF SET CONSTANT TABLE = 70 *)
