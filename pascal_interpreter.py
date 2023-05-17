@@ -401,8 +401,10 @@ def read_byte(registers, q):
 
     stream = get_stream(registers, file_id)
 
-    t = ['INT', 'REEL', 'CHAR'][q - 11]  # 11 is RDI opcode number
+    t = ['INT', 'REEL', 'INT'][q - 11]  # 11 is RDI opcode number / RDC reads byte as INTs
     value = stream.read()
+    if q == 13 and value != 0:
+        value = ord(value)
     store[store_addr] = (t, value)
 
     registers.sp -= 2
