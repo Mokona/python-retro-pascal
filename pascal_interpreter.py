@@ -17,8 +17,11 @@ from streams import InputStream
 # The compiler writes the result to file/PRR
 # The compiler outputs information to stdout/OUTPUT
 
-prd_filename = "hello.p2"
-prr_filename = "hello.out"
+prd_filename = "test.p2"
+prr_filename = "test.out"
+
+# prd_filename = "pcomp-adjusted.p2"
+# prr_filename = "pcomp-adjusted.out"
 
 # Constants
 
