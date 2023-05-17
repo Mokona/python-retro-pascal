@@ -70,6 +70,7 @@ class Code:
 
 code = [Code() for _ in range(PCMAX)]
 
+
 # Types are : INT (VI), REEL (VR), BOOL (VB), SETT (VS), ADR (VA), MARK (VM), UNDEF
 
 class Pointers:
@@ -138,7 +139,7 @@ def load(prd, store):
 
         return '', line, lookup(pc, x)
 
-    def assemble(ch, line, pc):
+    def assemble(ch, line, pc, store):
         """TRANSLATE SYMBOLIC CODE INTO MACHINE CODE AND context.store"""
         nonlocal pointers
 
@@ -176,9 +177,9 @@ def load(prd, store):
                 i, line = string_buffer.parse_integer(line)
                 if abs(i) > LARGEINT:
                     op = 8
-                    context.store[pointers.icp] = ('INT', i)
+                    store[pointers.icp] = ('INT', i)
                     q = MAXSTK
-                    while context.store[q][1] != i:
+                    while store[q][1] != i:
                         q += 1
                     if q == pointers.icp:
                         pointers.icp += 1
@@ -191,9 +192,9 @@ def load(prd, store):
                 op = 8
                 p = 2
                 r, line = string_buffer.parse_integer(line)
-                context.store[pointers.rcp] = ('REEL', r)
+                store[pointers.rcp] = ('REEL', r)
                 q = OVERI
-                while context.store[q][1] != r:
+                while store[q][1] != r:
                     q += 1
                 if q == pointers.rcp:
                     pointers.rcp += 1
@@ -216,9 +217,9 @@ def load(prd, store):
 
                     s.add(s1)
 
-                context.store[pointers.scp] = ('SET', s)
+                store[pointers.scp] = ('SET', s)
                 q = OVERR
-                while context.store[q][1] != s:
+                while store[q][1] != s:
                     q += 1
                 if q == pointers.scp:
                     pointers.scp += 1
@@ -228,10 +229,10 @@ def load(prd, store):
             lb, line = string_buffer.parse_integer(line)
             ub, line = string_buffer.parse_integer(line)
 
-            context.store[pointers.bcp - 1] = ('INT', lb)
-            context.store[pointers.bcp] = ('INT', ub)
+            store[pointers.bcp - 1] = ('INT', lb)
+            store[pointers.bcp] = ('INT', ub)
             q = OVERS
-            while context.store[q - 1][1] != lb or context.store[q][1] != ub:
+            while store[q - 1][1] != lb or store[q][1] != ub:
                 q += 2
             if q == pointers.bcp:
                 pointers.bcp += 2
@@ -241,7 +242,7 @@ def load(prd, store):
             ch, line = string_buffer.parse_char(line)
             q = pointers.mcp
             while ch != "'":
-                context.store[pointers.mcp] = ('INT', ord(ch))
+                store[pointers.mcp] = ('INT', ord(ch))
                 pointers.mcp += 1
                 ch = line[0]
                 line = line[1:]
@@ -275,7 +276,7 @@ def load(prd, store):
 
             labeltab[label_id] = (label_value, 'DEFINED')
 
-    def generate(pc):
+    def generate(pc, store):
         nonlocal prd
         while line := prd.readline():
             if len(line.strip()) > 0:
@@ -294,20 +295,19 @@ def load(prd, store):
                     update(x, label_value)
                 elif ch == ' ':
                     ch, line = string_buffer.parse_char(line)
-                    pc = assemble(ch, line, pc)
+                    pc = assemble(ch, line, pc, store)
             else:
                 break
 
     init()
-    generate(BEGINCODE)
-    generate(0)  # Inserting start of code (which is at the end of assembly code, after a blank line)
+    generate(BEGINCODE, store)
+    generate(0, store)  # Inserting start of code (which is at the end of assembly code, after a blank line)
 
 
 def base(context, ld):
     ad = context.mp
     while ld > 0:
-        _, mark_value = context.store[ad + 1]
-        ad = mark_value
+        _, ad = context.store[ad + 1]  # Read static link
         ld -= 1
     return ad
 
@@ -469,7 +469,8 @@ def call_sp(q, context: "Context"):
         _, v = context.store[context.sp]
         context.store[context.sp] = ('REEL', atan(v))
     elif q == 20:  # (*SAV*)
-        _, addr = context.store[context.sp]
+        t, addr = context.store[context.sp]
+        assert(t == 'ADR')
         context.store[addr] = ('ADR', context.np)
         context.sp -= 1
 
@@ -489,12 +490,10 @@ def ex0(op, p, q, context):
         push(context)
         context.store[context.sp] = t, v
     elif op == 2:  # (*STR*)
-        t, v = context.store[context.sp]
-        context.store[base(context, p) + q] = t, v
+        context.store[base(context, p) + q] = context.store[context.sp]
         context.sp -= 1
     elif op == 3:  # (*SRO*)
-        t, v = context.store[context.sp]
-        context.store[q] = t, v
+        context.store[q] = context.store[context.sp]
         context.sp -= 1
     elif op == 4:  # (*LDA*)
         push(context)
@@ -503,7 +502,8 @@ def ex0(op, p, q, context):
         push(context)
         context.store[context.sp] = ('ADR', q)
     elif op == 6:  # (*STO*)
-        _, adr = context.store[context.sp - 1]
+        t, adr = context.store[context.sp - 1]
+        assert (t == 'ADR')
         context.store[adr] = context.store[context.sp]
         context.sp -= 2
     elif op == 7:  # (*LDC*)
@@ -529,15 +529,15 @@ def ex0(op, p, q, context):
         context.store[context.sp] = (t, v + q)
     elif op == 11:  # (*MST*)
         # (*P=LEVEL OF CALLING PROCEDURE MINUS LEVEL OF CALLED PROCEDURE + 1;  SET DL AND SL, INCREMENT SP*)
-        context.store[context.sp + 1] = ('UNDEF', 0)
-        context.store[context.sp + 2] = ('MARK', base(context, p))
-        context.store[context.sp + 3] = ('MARK', context.mp)
-        context.store[context.sp + 4] = ('UNDEF', 0)
+        context.store[context.sp + 1] = ('UNDEF', 0)  # For return value
+        context.store[context.sp + 2] = ('MARK', base(context, p))  # For static link
+        context.store[context.sp + 3] = ('MARK', context.mp)  # For dynamic link
+        context.store[context.sp + 4] = ('UNDEF', 0)  # For previous EP
         context.sp += 4
     elif op == 12:  # (*CUP*)
         # (*P=NO OF LOCATIONS FOR PARAMETERS, Q=ENTRY POINT*)
         context.mp = context.sp - (p + 3)
-        context.store[context.mp + 3] = ('MARK', context.pc)
+        context.store[context.mp + 3] = ('MARK', context.pc)  # Return address
         context.pc = q
     elif op == 13:  # (*ENT*)
         j = context.mp + q
@@ -659,9 +659,9 @@ def ex1(op, p, q, context):
         context.sp -= 1
     if op == 26:  # (*CHK*)
         _, v1 = context.store[context.sp]
-        _, v2 = context.store[q - 1]
-        _, v3 = context.store[q]
-        if v1 < v2 or v1 > v3:
+        _, lower_bound = context.store[q - 1]
+        _, upper_bound = context.store[q]
+        if v1 < lower_bound or v1 > upper_bound:
             raise RuntimeError("Value out of range")
     if op == 27:  # (*EOF*)
         file_eof(context)
@@ -832,7 +832,11 @@ def interpret(input_stream, output_stream, input_file, output_file, context):
         p = c.p
         q = c.q
 
-        # print(f"{context.pc} {instructions[op]}, {p}, {q}, {context.store[context.sp - 3:context.sp + 3]}")
+        # adjusted_sp = max(3, context.sp)
+        # print(f"{context.pc:3} {instructions[op]:3}, {p:2}, {q:2}, {context.store[adjusted_sp - 3:adjusted_sp + 3]}", end="\t")
+        #
+        # adjusted_mp = max(0, context.mp)
+        # print(f"{context.mp:3} {context.store[adjusted_mp:adjusted_mp+5]}")
 
         context.pc += 1
 
