@@ -444,7 +444,6 @@ def call_sp(q, context: "Context"):
         writeline(context)
     elif q == 6:  # (*WRS*)
         writestr(context)
-        context.sp -= 1
     elif q == 7:  # (*ELN*)
         eoln(context)
     elif q in (8, 9, 10):  # (*WRI*) (*WRR*) (*WRC*)
