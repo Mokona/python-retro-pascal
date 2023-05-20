@@ -9,15 +9,25 @@ This is not pythonic Python at all. The mixture is weird. But it's working.
 
 Usage is crude and there's no bell nor whistles.
 
-To use the compiler: `python pascal_interpreter.py pcomp-adjusted.p2 < hello.pas`, where
-`pcomp-adjusted.p2` is the P2 code for the compiler (found in the `compiler` folder)
-and `hello.pas` a source file written in early Pascal. You can find it into the
-`examples` folder.
+To use the compiler, from this folder, run
+`python3 pascal_interpreter.py ../compiler/pcomp-adjusted.p2 < ../examples/hello.pas`.
 
-It will produce a `pcomp-adjusted.out` file with the P2 result, that you then
-run. Rename it to `hello.p2`, then: `python pascal_interpreter.py test.p2 < /dev/null`.
+It will produce a `pcomp-adjusted.out` file with the P2 result in the compiler folder.
+, you can run the result with:
+`python3 pascal_interpreter.py ../compiler/pcomp-adjusted.out < /dev/null`.
 
 The interpreted expects something in the standard input to run. That's was the original
 interpreted is doing too. You can use `/dev/null`, or just press `ENTER` after the
 interpreter has started.
 
+You should see a nice `HELLO, WORLD` on the standard output. 
+
+At the beginning of the source file, you can modify three options for the compiler.
+They are written in the directive format, with a letter denoting the option followed
+by a plus ('+') to enable it, or a minus ('-') to disable it.
+
+Example to activate everything: `(*$T+,L+,C+*)`
+
+  * `T` lists the compilation tables,
+  * `L` produces the listing (and will show the errors),
+  * `C` produces the code output.
