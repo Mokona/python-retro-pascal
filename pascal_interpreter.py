@@ -24,15 +24,11 @@ on stdin into P-Code written in the PRR file.
 # An interpreted program must always have something on stdin. If you don't
 # have any entry, just use /dev/null
 
-# The compiler reads from stdin/INPUT
-# The compiler writes the result to file/PRR
-# The compiler outputs information to stdout/OUTPUT
+# To use the compiler
+# python pascal_interpreter.py pcomp-adjusted.p2 < test.pas
 
-# prd_filename = "test.p2"
-# prr_filename = "test.out"
-
-prd_filename = "pcomp-adjusted.p2"
-prr_filename = "pcomp-adjusted.out"
+# To run the result:
+# python pascal_interpreter.py test.p2 < /dev/null
 
 # Constants
 
@@ -872,6 +868,11 @@ def interpret(input_stream, output_stream, input_file, output_file, context):
 
 
 def main():
+    import sys
+    prd_filename = sys.argv[1]
+    base_filename, _ = splitext(prd_filename)
+    prr_filename = base_filename + ".out"
+
     store: list[tuple] = [('UNDEF', None) for _ in range(OVERM)]  # Tuples of (Type, Value)
 
     with open(prd_filename) as prd:
