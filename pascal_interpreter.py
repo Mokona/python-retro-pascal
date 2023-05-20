@@ -839,7 +839,7 @@ def interpret(input_stream, output_stream, input_file, output_file, context):
         q = c.q
 
         # adjusted_sp = max(3, context.sp)
-        # print(f"{context.pc:3} {instructions[op]:3}, {p:2}, {q:2}, {context.store[adjusted_sp - 3:adjusted_sp + 3]}", end="\t")
+        # print(f"{context.pc:3} {instructions[op]:3}, {p:2}, {q:2}, {context.store[adjusted_sp - 3:adjusted_sp]} \t {context.store[adjusted_sp:adjusted_sp + 3]}")
         #
         # adjusted_mp = max(0, context.mp)
         # print(f"{context.mp:3} {context.store[adjusted_mp:adjusted_mp+5]}")
