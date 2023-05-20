@@ -239,7 +239,8 @@ def load(prd, store):
                 if pointers.bcp == OVERB:
                     raise RuntimeError("Boundary table overflow")
         elif op == 56:  # (*LCA*)
-            ch, line = string_buffer.parse_char(line)
+            ch = line[0]
+            line = line[1:]
             q = pointers.mcp
             while ch != "'":
                 store[pointers.mcp] = ('INT', ord(ch))
