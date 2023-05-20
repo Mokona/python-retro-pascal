@@ -371,6 +371,9 @@ def writestr(context: "Context"):
     _, k = context.store[context.sp - 1]
     _, j = context.store[context.sp - 2]
 
+    k, j = j, k  # I'm not sure why these two values seem inverted compared to original
+    # If not inverted, this makes no sense. Or is it because another bug?
+
     if k > j:
         for i in range(k - j):
             stream.write(' ')
