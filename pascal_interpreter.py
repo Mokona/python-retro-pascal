@@ -1,10 +1,19 @@
 import io
 import sys
 from math import sin, cos, exp, log, sqrt, atan, trunc
+from os.path import splitext
 
 import streams
 import string_buffer
 from streams import InputStream
+
+"""This is a P-Code Interpreter at P2 level.
+
+This particular file is a direct transcription of the pasint.pas
+source code, but in Python. That makes it really look strange, but
+it's capable of running the P2 compiler and translate a Pascal file
+on stdin into P-Code written in the PRR file.
+"""
 
 # INPUT is stdin
 # OUTPUT is stdout
@@ -12,6 +21,8 @@ from streams import InputStream
 # PRR is output file
 
 # The interpreter reads the program from PRD
+# An interpreted program must always have something on stdin. If you don't
+# have any entry, just use /dev/null
 
 # The compiler reads from stdin/INPUT
 # The compiler writes the result to file/PRR
@@ -25,8 +36,10 @@ prr_filename = "pcomp-adjusted.out"
 
 # Constants
 
+# The original PCMAX value was adjusted up, it was not enough to
+# run the compiler.
 # PCMAX: int = 13470  # (* SIZE OF context.store *)
-PCMAX: int = 15000  # (* SIZE OF context.store *)
+PCMAX: int = 15000  # (* SIZE OF context.store. *)
 MAXSTK: int = 13650  # (* SIZE OF VARIABLE context.store *)
 OVERI: int = MAXSTK + 5  # (* SIZE OF INTEGER CONSTANT TABLE = 5 *)
 OVERR: int = OVERI + 5  # (* SIZE OF REAL CONSTANT TABLE = 5 *)
@@ -476,7 +489,7 @@ def call_sp(q, context: "Context"):
         context.store[context.sp] = ('REEL', atan(v))
     elif q == 20:  # (*SAV*)
         t, addr = context.store[context.sp]
-        assert(t == 'ADR')
+        assert (t == 'ADR')
         context.store[addr] = ('ADR', context.np)
         context.sp -= 1
 
