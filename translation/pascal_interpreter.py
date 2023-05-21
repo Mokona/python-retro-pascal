@@ -36,7 +36,8 @@ on stdin into P-Code written in the PRR file.
 # run the compiler.
 # PCMAX: int = 13470  # (* SIZE OF context.store *)
 PCMAX: int = 15000  # (* SIZE OF context.store. *)
-MAXSTK: int = 13650  # (* SIZE OF VARIABLE context.store *)
+# MAXSTK: int = 13650  # (* SIZE OF VARIABLE context.store *)
+MAXSTK: int = 20000  # (* SIZE OF VARIABLE context.store *)  # Extra store space is needed for Compiling the Compiler
 OVERI: int = MAXSTK + 5  # (* SIZE OF INTEGER CONSTANT TABLE = 5 *)
 OVERR: int = OVERI + 5  # (* SIZE OF REAL CONSTANT TABLE = 5 *)
 OVERS: int = OVERR + 70  # (* SIZE OF SET CONSTANT TABLE = 70 *)
