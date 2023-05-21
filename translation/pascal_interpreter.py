@@ -707,7 +707,7 @@ def ex1(op, p, q, context):
 def ex2(op, p, q, context):
     if op == 32:  # (*SGS*)
         _, v = context.store[context.sp]
-        context.store[context.sp] = ('SETT', v)
+        context.store[context.sp] = ('SETT', {v})
     if op == 33:  # (*FLT*)
         _, v = context.store[context.sp]
         context.store[context.sp] = ('REEL', v)
@@ -757,12 +757,12 @@ def ex2(op, p, q, context):
         context.sp -= 1
         _, v1 = context.store[context.sp]
         _, v2 = context.store[context.sp + 1]
-        context.store[context.sp] = ('BOOL', v1.intersection(v2))
+        context.store[context.sp] = ('SETT', v1.intersection(v2))
     if op == 47:  # (*UNI*)
         context.sp -= 1
         _, v1 = context.store[context.sp]
         _, v2 = context.store[context.sp + 1]
-        context.store[context.sp] = ('BOOL', v1.union(v2))
+        context.store[context.sp] = ('SETT', v1.union(v2))
 
     return True
 
