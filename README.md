@@ -29,8 +29,8 @@ The system compiles and runs the following [sample files](https://github.com/sam
 
   * hello.pas
   * roman.pasq
+  * qsort.pas (provided you add a newline avec the final "END.")
 
 The system fails to compile the following files:
 
-  * qsort.pas
   * the compiler itself

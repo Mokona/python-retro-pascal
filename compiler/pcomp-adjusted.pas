@@ -349,18 +349,14 @@ PROCEDURE ENDOFLINE;
       'A','B','C','D','E','F','G','H','I',
       'J','K','L','M','N','O','P','Q','R',
       'S','T','U','V','W','X','Y','Z':
-        BEGIN
-          K := 1;
-          (* ADJUSTMENT MADE DURING DEBUGGING. NOT FAITHFUL TO ORIGINAL. [SG] *)
-          WHILE ((ORD(CH)>=ORD('A')) AND (ORD(CH)<=ORD('Z'))
-                OR (ORD(CH)>=ORD('0')) AND (ORD(CH)<=ORD('9'))) DO
-          BEGIN
-            IF K < 8 THEN BEGIN ID[K] := CH; K := K + 1 END ;
+        BEGIN K := 0;
+          REPEAT
+            IF K < 8 THEN BEGIN K := K + 1; ID[K] := CH END ;
             NEXTCH
             (* REPLACED CDC SPECIFIC CHARACTER TEST *)
-                (* (ORD(CH)<ORD('A')) OR (ORD(CH)>ORD('9')) *)
-          END;
-          K:=K-1;
+                (* (ORD(CH)<ORD('A')) OR (ORD(CH)>ORD('9')) *);
+          UNTIL ((ORD(CH)<ORD('A')) OR (ORD(CH)>ORD('Z')))
+                AND ((ORD(CH)<ORD('0')) OR (ORD(CH)>ORD('9')));
           IF K >= KK THEN KK := K
           ELSE
             REPEAT ID[KK] := ' '; KK := KK - 1
