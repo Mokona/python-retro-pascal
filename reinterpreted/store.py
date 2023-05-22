@@ -103,6 +103,30 @@ class Store:
         except MemoryError:
             raise RuntimeError("Set table overflow")
 
+    def add_boundary_constant(self, boundary_value: tuple[int, int]):
+        lower_bound, upper_bound = boundary_value
+        typed_lower_bound = ('INT', lower_bound)
+        typed_upper_bound = ('INT', upper_bound)
+
+        ranged_ptr = self.pointers.boundary_ranged_ptr
+        self.store[ranged_ptr.pointer] = typed_lower_bound
+        self.store[ranged_ptr.pointer + 1] = typed_upper_bound
+
+        address = None
+        for ptr in range(ranged_ptr.begin, ranged_ptr.end):
+            if self.store[ptr] == typed_lower_bound and self.store[ptr + 1] == typed_upper_bound:
+                address = ptr
+                break
+        assert (address is not None)
+
+        if address == ranged_ptr.pointer:
+            try:
+                ranged_ptr.increment_or_fail()
+                ranged_ptr.increment_or_fail()  # Boundary takes two places
+            except MemoryError:
+                raise RuntimeError("Boundary table overflow")
+        return address + 1  # The pointed address is on the upper bound
+
 
 class TestStore(unittest.TestCase):
     class MockStoreConfiguration(StoreConfiguration):
@@ -157,3 +181,12 @@ class TestStore(unittest.TestCase):
         constant_address = store.pointers.set_const_table_address
         self.assertEqual({1, 2, 3}, store[constant_address][1])
         self.assertEqual(constant_address, q)
+
+    def test_a_boundary_constant_can_be_added_to_store(self):
+        store = Store(self.MockStoreConfiguration())
+        q = store.add_boundary_constant((1, 5))
+
+        constant_address = store.pointers.boundary_const_table_address
+        self.assertEqual(1, store[constant_address][1])
+        self.assertEqual(5, store[constant_address+1][1])
+        self.assertEqual(constant_address + 1, q)  # The pointed address is the upper bound

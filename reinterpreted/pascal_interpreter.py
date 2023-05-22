@@ -184,15 +184,7 @@ def load(prd, store: Store):
             lb, line = string_buffer.parse_integer(line)
             ub, line = string_buffer.parse_integer(line)
 
-            store[pointers.bcp - 1] = ('INT', lb)
-            store[pointers.bcp] = ('INT', ub)
-            q = OVERS
-            while store[q - 1][1] != lb or store[q][1] != ub:
-                q += 2
-            if q == pointers.bcp:
-                pointers.bcp += 2
-                if pointers.bcp == OVERB:
-                    raise RuntimeError("Boundary table overflow")
+            store.add_boundary_constant((lb, ub))
         elif op == 56:  # (*LCA*)
             ch = line[0]
             line = line[1:]
