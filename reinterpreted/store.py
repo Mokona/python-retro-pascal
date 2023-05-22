@@ -64,12 +64,12 @@ class Store:
         return self.store[pc]
 
     # Pointer and store_ramge are related. Could make a type out of it
-    def __add_value_in_range(self, p_type, value, pointer, store_range):
+    def __add_value_in_range(self, typed_value, pointer, store_range):
+        self.store[pointer] = typed_value
+
         range_begin, range_end = store_range
-        self.store[pointer] = p_type, value
-        address = range_begin
-        while self.store[address][1] != value:
-            address += 1
+        index = self.store[range_begin:range_end].index(typed_value)
+        address = index + range_begin
         if address == pointer:
             pointer += 1
             if pointer == range_end:
@@ -78,7 +78,7 @@ class Store:
 
     def add_int_constant(self, int_value) -> int:
         try:
-            address, pointer = self.__add_value_in_range('INT', int_value,
+            address, pointer = self.__add_value_in_range(('INT', int_value),
                                                          self.pointers.int_const_ptr,
                                                          self.pointers.integer_table_range)
         except MemoryError:
@@ -88,7 +88,7 @@ class Store:
 
     def add_real_constant(self, real_value) -> int:
         try:
-            address, pointer = self.__add_value_in_range('REEL', real_value,
+            address, pointer = self.__add_value_in_range(('REEL', real_value),
                                                          self.pointers.real_const_ptr,
                                                          self.pointers.real_table_range)
         except MemoryError:
