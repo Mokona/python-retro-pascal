@@ -63,27 +63,38 @@ class Store:
     def __getitem__(self, pc):
         return self.store[pc]
 
+    # Pointer and store_ramge are related. Could make a type out of it
+    def __add_value_in_range(self, p_type, value, pointer, store_range):
+        range_begin, range_end = store_range
+        self.store[pointer] = p_type, value
+        address = range_begin
+        while self.store[address][1] != value:
+            address += 1
+        if address == pointer:
+            pointer += 1
+            if pointer == range_end:
+                raise MemoryError()
+        return address, pointer
+
     def add_int_constant(self, int_value) -> int:
-        self.store[self.pointers.int_const_ptr] = 'INT', int_value
-        address_for_const = self.pointers.integer_const_table_address
-        while self.store[address_for_const][1] != int_value:
-            address_for_const += 1
-        if address_for_const == self.pointers.int_const_ptr:
-            self.pointers.int_const_ptr += 1
-            if self.pointers.int_const_ptr == self.pointers.integer_table_range[1]:
-                raise RuntimeError("Integer table overflow")
-        return address_for_const
+        try:
+            address, pointer = self.__add_value_in_range('INT', int_value,
+                                                         self.pointers.int_const_ptr,
+                                                         self.pointers.integer_table_range)
+        except MemoryError:
+            raise RuntimeError("Integer table overflow")
+        self.pointers.int_const_ptr = pointer
+        return address
 
     def add_real_constant(self, real_value) -> int:
-        self.store[self.pointers.real_const_ptr] = 'REEL', real_value
-        address_for_const = self.pointers.real_const_table_address
-        while self.store[address_for_const][1] != real_value:
-            address_for_const += 1
-        if address_for_const == self.pointers.real_const_ptr:
-            self.pointers.real_const_ptr += 1
-            if self.pointers.real_const_ptr == self.pointers.real_table_range[1]:
-                raise RuntimeError("Real table overflow")
-        return address_for_const
+        try:
+            address, pointer = self.__add_value_in_range('REEL', real_value,
+                                                         self.pointers.real_const_ptr,
+                                                         self.pointers.real_table_range)
+        except MemoryError:
+            raise RuntimeError("Real table overflow")
+        self.pointers.real_const_ptr = pointer
+        return address
 
 
 class TestStore(unittest.TestCase):
