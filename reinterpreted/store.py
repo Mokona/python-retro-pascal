@@ -17,6 +17,21 @@ class StoreConfiguration:
     multiple_const_table_size = 1300
 
 
+class RangedPointer:
+    def __init__(self, begin, end):
+        self.pointer = begin
+        self.begin = begin
+        self.end = end
+
+    def get_ptr(self):
+        return self.pointer
+
+    def increment_or_fail(self):
+        self.pointer += 1
+        if self.pointer == self.end:
+            raise MemoryError()
+
+
 class Pointers:
     def __init__(self, configuration: StoreConfiguration):
         self.integer_const_table_address = configuration.maximum_stack_size + 1
@@ -32,11 +47,11 @@ class Pointers:
         self.boundary_table_range = (self.boundary_const_table_address, self.multiple_const_table_address)
         self.multiple_table_range = (self.multiple_const_table_address, self.highest_address)
 
-        self.int_const_ptr: int = self.integer_const_table_address
-        self.real_const_ptr: int = self.real_const_table_address
-        self.set_const_ptr: int = self.set_const_table_address
-        self.boundary_const_ptr: int = self.boundary_const_table_address
-        self.multiple_const_ptr: int = self.multiple_const_table_address
+        self.int_ranged_ptr = RangedPointer(self.integer_const_table_address, self.real_const_table_address)
+        self.real_ranged_ptr = RangedPointer(self.real_const_table_address, self.set_const_table_address)
+        self.set_ranged_ptr = RangedPointer(self.set_const_table_address, self.boundary_const_table_address)
+        self.boundary_ranged_ptr = RangedPointer(self.boundary_const_table_address, self.multiple_const_table_address)
+        self.multiple_ranged_ptr = RangedPointer(self.multiple_const_table_address, self.highest_address)
 
 
 class Store:
@@ -64,23 +79,19 @@ class Store:
         return self.store[pc]
 
     # Pointer and store_ramge are related. Could make a type out of it
-    def __add_value_in_range(self, typed_value, pointer, store_range):
-        self.store[pointer] = typed_value
+    def __add_value_in_range(self, typed_value, pointer_new: RangedPointer):
+        self.store[pointer_new.pointer] = typed_value
 
-        range_begin, range_end = store_range
-        index = self.store[range_begin:range_end].index(typed_value)
-        address = index + range_begin
-        if address == pointer:
-            pointer += 1
-            if pointer == range_end:
-                raise MemoryError()
-        return address, pointer
+        index = self.store[pointer_new.begin:pointer_new.end].index(typed_value)
+
+        address = index + pointer_new.begin
+        if address == pointer_new.pointer:
+            pointer_new.increment_or_fail()
+        return address, pointer_new.pointer
 
     def add_int_constant(self, int_value) -> int:
         try:
-            address, pointer = self.__add_value_in_range(('INT', int_value),
-                                                         self.pointers.int_const_ptr,
-                                                         self.pointers.integer_table_range)
+            address, pointer = self.__add_value_in_range(('INT', int_value), self.pointers.int_ranged_ptr)
         except MemoryError:
             raise RuntimeError("Integer table overflow")
         self.pointers.int_const_ptr = pointer
@@ -88,9 +99,7 @@ class Store:
 
     def add_real_constant(self, real_value) -> int:
         try:
-            address, pointer = self.__add_value_in_range(('REEL', real_value),
-                                                         self.pointers.real_const_ptr,
-                                                         self.pointers.real_table_range)
+            address, pointer = self.__add_value_in_range(('REEL', real_value), self.pointers.real_ranged_ptr)
         except MemoryError:
             raise RuntimeError("Real table overflow")
         self.pointers.real_const_ptr = pointer
