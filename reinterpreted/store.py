@@ -31,6 +31,9 @@ class RangedPointer:
         if self.pointer == self.end:
             raise MemoryError()
 
+    def get_range(self):
+        return range(self.begin, self.end)
+
 
 class Pointers:
     def __init__(self, configuration: StoreConfiguration):
@@ -40,12 +43,6 @@ class Pointers:
         self.boundary_const_table_address = self.set_const_table_address + configuration.set_const_table_size
         self.multiple_const_table_address = self.boundary_const_table_address + configuration.boundary_const_table_size
         self.highest_address = self.multiple_const_table_address + self.multiple_const_table_address + 1
-
-        self.integer_table_range = (self.integer_const_table_address, self.real_const_table_address)
-        self.real_table_range = (self.real_const_table_address, self.set_const_table_address)
-        self.set_table_range = (self.set_const_table_address, self.boundary_const_table_address)
-        self.boundary_table_range = (self.boundary_const_table_address, self.multiple_const_table_address)
-        self.multiple_table_range = (self.multiple_const_table_address, self.highest_address)
 
         self.int_ranged_ptr = RangedPointer(self.integer_const_table_address, self.real_const_table_address)
         self.real_ranged_ptr = RangedPointer(self.real_const_table_address, self.set_const_table_address)
@@ -61,15 +58,15 @@ class Store:
         self.pointers = Pointers(configuration)
         self.store: list[tuple] = [('UNDEF', None) for _ in range(self.pointers.highest_address)]
 
-        for i in range(*self.pointers.integer_table_range):
+        for i in self.pointers.int_ranged_ptr.get_range():
             self.store[i] = ('INT', 0)
-        for i in range(*self.pointers.real_table_range):
+        for i in self.pointers.real_ranged_ptr.get_range():
             self.store[i] = ('REEL', 0.0)
-        for i in range(*self.pointers.set_table_range):
+        for i in self.pointers.set_ranged_ptr.get_range():
             self.store[i] = ('SETT', set())
-        for i in range(*self.pointers.boundary_table_range):
+        for i in self.pointers.boundary_ranged_ptr.get_range():
             self.store[i] = ('INT', 0)
-        for i in range(*self.pointers.multiple_table_range):
+        for i in self.pointers.multiple_ranged_ptr.get_range():
             self.store[i] = ('INT', 0)
 
     def __setitem__(self, pc, instruction):
