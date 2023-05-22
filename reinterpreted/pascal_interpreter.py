@@ -179,14 +179,7 @@ def load(prd, store: Store):
 
                     s.add(s1)
 
-                store[pointers.scp] = ('SET', s)
-                q = OVERR
-                while store[q][1] != s:
-                    q += 1
-                if q == pointers.scp:
-                    pointers.scp += 1
-                    if pointers.scp == OVERS:
-                        raise RuntimeError("Set table overflow")
+                q = store.add_set_constant(s)
         elif op == 26:  # (*CHK*)
             lb, line = string_buffer.parse_integer(line)
             ub, line = string_buffer.parse_integer(line)

@@ -102,6 +102,14 @@ class Store:
         self.pointers.real_const_ptr = pointer
         return address
 
+    def add_set_constant(self, set_value) -> int:
+        try:
+            address, pointer = self.__add_value_in_range(('SET', set_value), self.pointers.set_ranged_ptr)
+        except MemoryError:
+            raise RuntimeError("Set table overflow")
+        self.pointers.set_const_ptr = pointer
+        return address
+
 
 class TestStore(unittest.TestCase):
     class MockStoreConfiguration(StoreConfiguration):
@@ -147,4 +155,12 @@ class TestStore(unittest.TestCase):
 
         constant_address = store.pointers.real_const_table_address
         self.assertEqual(10.0, store[constant_address][1])
+        self.assertEqual(constant_address, q)
+
+    def test_a_set_constant_can_be_added_to_store(self):
+        store = Store(self.MockStoreConfiguration())
+        q = store.add_set_constant({1, 2, 3})
+
+        constant_address = store.pointers.set_const_table_address
+        self.assertEqual({1, 2, 3}, store[constant_address][1])
         self.assertEqual(constant_address, q)
