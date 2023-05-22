@@ -75,40 +75,33 @@ class Store:
     def __getitem__(self, pc):
         return self.store[pc]
 
-    # Pointer and store_ramge are related. Could make a type out of it
-    def __add_value_in_range(self, typed_value, pointer_new: RangedPointer):
-        self.store[pointer_new.pointer] = typed_value
+    def __add_value_in_range(self, typed_value, ranged_ptr: RangedPointer):
+        self.store[ranged_ptr.pointer] = typed_value
 
-        index = self.store[pointer_new.begin:pointer_new.end].index(typed_value)
+        index = self.store[ranged_ptr.begin:ranged_ptr.end].index(typed_value)
 
-        address = index + pointer_new.begin
-        if address == pointer_new.pointer:
-            pointer_new.increment_or_fail()
-        return address, pointer_new.pointer
+        address = index + ranged_ptr.begin
+        if address == ranged_ptr.pointer:
+            ranged_ptr.increment_or_fail()
+        return address
 
     def add_int_constant(self, int_value) -> int:
         try:
-            address, pointer = self.__add_value_in_range(('INT', int_value), self.pointers.int_ranged_ptr)
+            return self.__add_value_in_range(('INT', int_value), self.pointers.int_ranged_ptr)
         except MemoryError:
             raise RuntimeError("Integer table overflow")
-        self.pointers.int_const_ptr = pointer
-        return address
 
     def add_real_constant(self, real_value) -> int:
         try:
-            address, pointer = self.__add_value_in_range(('REEL', real_value), self.pointers.real_ranged_ptr)
+            return self.__add_value_in_range(('REEL', real_value), self.pointers.real_ranged_ptr)
         except MemoryError:
             raise RuntimeError("Real table overflow")
-        self.pointers.real_const_ptr = pointer
-        return address
 
     def add_set_constant(self, set_value) -> int:
         try:
-            address, pointer = self.__add_value_in_range(('SET', set_value), self.pointers.set_ranged_ptr)
+            return self.__add_value_in_range(('SET', set_value), self.pointers.set_ranged_ptr)
         except MemoryError:
             raise RuntimeError("Set table overflow")
-        self.pointers.set_const_ptr = pointer
-        return address
 
 
 class TestStore(unittest.TestCase):
