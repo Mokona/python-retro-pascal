@@ -10,9 +10,6 @@ from translation import streams, string_buffer
 The intent is to have a Pythonic version of PasInt.
 """
 
-
-
-
 # The original PCMAX value was adjusted up, it was not enough to
 # run the compiler.
 # PCMAX: int = 13470  # (* SIZE OF context.store *)
@@ -155,23 +152,16 @@ def load(prd, store: Store):
                 p = 1
                 i, line = string_buffer.parse_integer(line)
                 if abs(i) > LARGEINT:
-                    op = 8
+                    op = 8  # Change to LCI
                     q = store.add_int_constant(i)
                 else:
                     q = i
                 pass
             elif ch == 'R':
-                op = 8
+                op = 8  # Change to LCI
                 p = 2
-                r, line = string_buffer.parse_integer(line)
-                store[pointers.rcp] = ('REEL', r)
-                q = OVERI
-                while store[q][1] != r:
-                    q += 1
-                if q == pointers.rcp:
-                    pointers.rcp += 1
-                    if pointers.rcp == OVERM:
-                        raise RuntimeError("Real table overflow")
+                r, line = string_buffer.parse_real(line)
+                q = store.add_real_constant(r)
                 pass
             elif ch == 'N':
                 pass
@@ -179,7 +169,7 @@ def load(prd, store: Store):
                 p = 3
                 q, line = string_buffer.parse_integer(line)
             elif ch == '(':
-                op = 8
+                op = 8  # Change to LCI
                 p = 4
                 s = set()
 

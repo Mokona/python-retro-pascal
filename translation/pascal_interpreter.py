@@ -201,7 +201,7 @@ def load(prd, store):
             elif ch == 'R':
                 op = 8
                 p = 2
-                r, line = string_buffer.parse_integer(line)
+                r, line = string_buffer.parse_real(line)
                 store[pointers.rcp] = ('REEL', r)
                 q = OVERI
                 while store[q][1] != r:
