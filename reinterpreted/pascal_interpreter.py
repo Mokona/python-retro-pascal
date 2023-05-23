@@ -128,29 +128,29 @@ def load(prd, store: Store):
         if op in (17, 18, 19, 20, 21, 22):  # (*EQU,NEQ,GEQ,GRT,LEQ,LES*)
             p = [0, 1, 2, 3, 4, 5]['AIRBSM'.index(ch)]
             if p == 5:
-                q, line = string_buffer.parse_integer(line)
+                q, _ = string_buffer.parse_integer(line)
         elif op in (0, 2, 4):  # (*LOD,STR,LDA*)
             p, line = string_buffer.parse_integer(ch + line)
-            q, line = string_buffer.parse_integer(line)
+            q, _ = string_buffer.parse_integer(line)
         elif op == 12:  # (*CUP*)
             p, line = string_buffer.parse_integer(ch + line)
-            ch, line, q = label_search(pc, line)
+            _, _, q = label_search(pc, line)
         elif op == 11:  # (*MST*)
-            p, line = string_buffer.parse_integer(ch + line)
+            p, _ = string_buffer.parse_integer(ch + line)
         elif op == 14:  # (*RET*)
             p = [0, 1, 2, 3, 4, 5]['PIRCBA'.index(ch)]
         elif op in (1, 3, 5, 9, 10, 16, 55, 57):  # (*LDO,SRO,LAO,IND,INC,IXA,MOV,DEC*)
-            q, line = string_buffer.parse_integer(ch + line)
+            q, _ = string_buffer.parse_integer(ch + line)
         elif op in (13, 23, 24, 25):  # (*ENT,UJP,FJP,XJP*)
-            ch, line, q = label_search(pc, ch + line)
+            _, _, q = label_search(pc, ch + line)
         elif op == 15:  # (*CSP*)
-            name, line, ch = get_name(ch, line)
+            name, _, _ = get_name(ch, line)
             while sptable[q] != name:
                 q += 1
         elif op == 7:  # (*LDC*)
             if ch == 'I':
                 p = 1
-                i, line = string_buffer.parse_integer(line)
+                i, _ = string_buffer.parse_integer(line)
                 if abs(i) > LARGEINT:
                     op = 8  # Change to LCI
                     q = store.add_int_constant(i)
@@ -160,14 +160,14 @@ def load(prd, store: Store):
             elif ch == 'R':
                 op = 8  # Change to LCI
                 p = 2
-                r, line = string_buffer.parse_real(line)
+                r, _ = string_buffer.parse_real(line)
                 q = store.add_real_constant(r)
                 pass
             elif ch == 'N':
                 pass
             elif ch == 'B':
                 p = 3
-                q, line = string_buffer.parse_integer(line)
+                q, _ = string_buffer.parse_integer(line)
             elif ch == '(':
                 op = 8  # Change to LCI
                 p = 4
@@ -182,7 +182,7 @@ def load(prd, store: Store):
                 q = store.add_set_constant(s)
         elif op == 26:  # (*CHK*)
             lb, line = string_buffer.parse_integer(line)
-            ub, line = string_buffer.parse_integer(line)
+            ub, _ = string_buffer.parse_integer(line)
 
             store.add_boundary_constant((lb, ub))
         elif op == 56:  # (*LCA*)
