@@ -147,36 +147,36 @@ def load(prd, store: Store):
             while sptable[q] != name:
                 q += 1
         elif op == 7:  # (*LDC*)
-            ch = line[0]
-            if ch == 'I':
+            type_ch = line[0]
+            line = line[1:]
+            if type_ch == 'I':
                 p = 1
-                i, _ = string_buffer.parse_integer(line[1:])
+                i, _ = string_buffer.parse_integer(line)
                 if abs(i) > LARGEINT:
                     op = 8  # Change to LCI
                     q = store.add_int_constant(i)
                 else:
                     q = i
                 pass
-            elif ch == 'R':
+            elif type_ch == 'R':
                 op = 8  # Change to LCI
                 p = 2
-                r, _ = string_buffer.parse_real(line[1:])
+                r, _ = string_buffer.parse_real(line)
                 q = store.add_real_constant(r)
                 pass
-            elif ch == 'N':
+            elif type_ch == 'N':
                 pass
-            elif ch == 'B':
+            elif type_ch == 'B':
                 p = 3
-                q, _ = string_buffer.parse_integer(line[1:])
-            elif ch == '(':
+                q, _ = string_buffer.parse_integer(line)
+            elif type_ch == '(':
                 op = 8  # Change to LCI
                 p = 4
                 s = set()
 
-                line = line[1:]
-                while ch != ')':
+                while type_ch != ')':
                     s1, line = string_buffer.parse_integer(line)
-                    ch = line.strip()[0]
+                    type_ch = line.strip()[0]
 
                     s.add(s1)
 
