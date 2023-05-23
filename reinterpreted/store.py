@@ -17,9 +17,6 @@ class RangedPointer:
         self.begin = begin
         self.end = end
 
-    def get_ptr(self):
-        return self.pointer
-
     def increment_or_fail(self):
         self.pointer += 1
         if self.pointer == self.end:
@@ -97,7 +94,7 @@ class Store:
         except MemoryError:
             raise RuntimeError("Set table overflow")
 
-    def add_boundary_constant(self, boundary_value: tuple[int, int]):
+    def add_boundary_constant(self, boundary_value: tuple[int, int]) -> int:
         lower_bound, upper_bound = boundary_value
         typed_lower_bound = ('INT', lower_bound)
         typed_upper_bound = ('INT', upper_bound)
@@ -121,6 +118,20 @@ class Store:
                 raise RuntimeError("Boundary table overflow")
         return address + 1  # The pointed address is on the upper bound
 
+    def add_multiple_constant(self, value_list: list) -> int:
+        ranged_ptr = self.pointers.multiple_ranged_ptr
+
+        address = ranged_ptr.pointer
+        if address + len(value_list) >= ranged_ptr.end:
+            raise RuntimeError("Multiple table overflow")
+
+        for ptr, value in zip(range(ranged_ptr.pointer, ranged_ptr.end), value_list):
+            self.store[ptr] = 'INT', value
+
+        ranged_ptr.pointer += len(value_list)
+
+        return address
+
 
 class TestStore(unittest.TestCase):
     class MockStoreConfiguration(StoreConfiguration):
@@ -129,7 +140,7 @@ class TestStore(unittest.TestCase):
         real_const_table_size = 3
         set_const_table_size = 10
         boundary_const_table_size = 4
-        multiple_const_table_size = 100
+        multiple_const_table_size = 10
 
     def test_a_typed_value_can_be_added_at_an_address(self):
         store = Store(self.MockStoreConfiguration())
@@ -184,3 +195,13 @@ class TestStore(unittest.TestCase):
         self.assertEqual(1, store[constant_address][1])
         self.assertEqual(5, store[constant_address + 1][1])
         self.assertEqual(constant_address + 1, q)  # The pointed address is the upper bound
+
+    def test_a_multiple_constant_can_be_added_to_store(self):
+        store = Store(self.MockStoreConfiguration())
+        q = store.add_multiple_constant([10, 20, 30])
+
+        constant_address = store.pointers.multiple_const_table_address
+        self.assertEqual(10, store[constant_address][1])
+        self.assertEqual(20, store[constant_address + 1][1])
+        self.assertEqual(30, store[constant_address + 2][1])
+        self.assertEqual(constant_address, q)

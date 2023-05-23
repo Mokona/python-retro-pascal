@@ -186,14 +186,8 @@ def load(prd, store: Store):
 
             store.add_boundary_constant((lb, ub))
         elif op == 56:  # (*LCA*)
-            ch = line[0]
-            line = line[1:]
-            q = pointers.mcp
-            while ch != "'":
-                store[pointers.mcp] = ('INT', ord(ch))
-                pointers.mcp += 1
-                ch = line[0]
-                line = line[1:]
+            data = [ord(ch) for ch in line[:line.index("'")]]
+            q = store.add_multiple_constant(data)
 
         code[pc].op = op
         code[pc].p = p
