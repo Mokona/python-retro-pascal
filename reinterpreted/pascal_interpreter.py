@@ -110,9 +110,9 @@ def load(prd, store: Store):
     def label_search(pc, line):
         l_index = line.index('L')
         line = line[l_index + 1:]
-        x, line = string_buffer.parse_integer(line)
+        x, _ = string_buffer.parse_integer(line)
 
-        return '', line, lookup(pc, x)
+        return lookup(pc, x)
 
     def assemble(line, pc, store):
         """TRANSLATE SYMBOLIC CODE INTO MACHINE CODE AND context.store"""
@@ -135,7 +135,7 @@ def load(prd, store: Store):
             q, _ = string_buffer.parse_integer(line)
         elif op == 12:  # (*CUP*)
             p, line = string_buffer.parse_integer(ch + line)
-            _, _, q = label_search(pc, line)
+            q = label_search(pc, line)
         elif op == 11:  # (*MST*)
             p, _ = string_buffer.parse_integer(ch + line)
         elif op == 14:  # (*RET*)
@@ -143,7 +143,7 @@ def load(prd, store: Store):
         elif op in (1, 3, 5, 9, 10, 16, 55, 57):  # (*LDO,SRO,LAO,IND,INC,IXA,MOV,DEC*)
             q, _ = string_buffer.parse_integer(ch + line)
         elif op in (13, 23, 24, 25):  # (*ENT,UJP,FJP,XJP*)
-            _, _, q = label_search(pc, ch + line)
+            q = label_search(pc, ch + line)
         elif op == 15:  # (*CSP*)
             name, _ = get_name(line)
             while sptable[q] != name:
