@@ -119,39 +119,38 @@ def load(prd, store: Store):
         nonlocal pointers
 
         name, line = get_name(line)
-        ch = line[0]
-        line = line[1:]
 
         op = instructions.index(name)
         p = 0
         q = 0
 
         if op in (17, 18, 19, 20, 21, 22):  # (*EQU,NEQ,GEQ,GRT,LEQ,LES*)
-            p = [0, 1, 2, 3, 4, 5]['AIRBSM'.index(ch)]
+            p = [0, 1, 2, 3, 4, 5]['AIRBSM'.index(line[0])]
             if p == 5:
-                q, _ = string_buffer.parse_integer(line)
+                q, _ = string_buffer.parse_integer(line[1:])
         elif op in (0, 2, 4):  # (*LOD,STR,LDA*)
-            p, line = string_buffer.parse_integer(ch + line)
+            p, line = string_buffer.parse_integer(line)
             q, _ = string_buffer.parse_integer(line)
         elif op == 12:  # (*CUP*)
-            p, line = string_buffer.parse_integer(ch + line)
+            p, line = string_buffer.parse_integer(line)
             q = label_search(pc, line)
         elif op == 11:  # (*MST*)
-            p, _ = string_buffer.parse_integer(ch + line)
+            p, _ = string_buffer.parse_integer(line)
         elif op == 14:  # (*RET*)
-            p = [0, 1, 2, 3, 4, 5]['PIRCBA'.index(ch)]
+            p = [0, 1, 2, 3, 4, 5]['PIRCBA'.index(line[0])]
         elif op in (1, 3, 5, 9, 10, 16, 55, 57):  # (*LDO,SRO,LAO,IND,INC,IXA,MOV,DEC*)
-            q, _ = string_buffer.parse_integer(ch + line)
+            q, _ = string_buffer.parse_integer(line)
         elif op in (13, 23, 24, 25):  # (*ENT,UJP,FJP,XJP*)
-            q = label_search(pc, ch + line)
+            q = label_search(pc, line)
         elif op == 15:  # (*CSP*)
             name, _ = get_name(line)
             while sptable[q] != name:
                 q += 1
         elif op == 7:  # (*LDC*)
+            ch = line[0]
             if ch == 'I':
                 p = 1
-                i, _ = string_buffer.parse_integer(line)
+                i, _ = string_buffer.parse_integer(line[1:])
                 if abs(i) > LARGEINT:
                     op = 8  # Change to LCI
                     q = store.add_int_constant(i)
@@ -161,19 +160,20 @@ def load(prd, store: Store):
             elif ch == 'R':
                 op = 8  # Change to LCI
                 p = 2
-                r, _ = string_buffer.parse_real(line)
+                r, _ = string_buffer.parse_real(line[1:])
                 q = store.add_real_constant(r)
                 pass
             elif ch == 'N':
                 pass
             elif ch == 'B':
                 p = 3
-                q, _ = string_buffer.parse_integer(line)
+                q, _ = string_buffer.parse_integer(line[1:])
             elif ch == '(':
                 op = 8  # Change to LCI
                 p = 4
                 s = set()
 
+                line = line[1:]
                 while ch != ')':
                     s1, line = string_buffer.parse_integer(line)
                     ch = line.strip()[0]
@@ -182,11 +182,12 @@ def load(prd, store: Store):
 
                 q = store.add_set_constant(s)
         elif op == 26:  # (*CHK*)
-            lb, line = string_buffer.parse_integer(line)
+            lb, line = string_buffer.parse_integer(line[1:])
             ub, _ = string_buffer.parse_integer(line)
 
             store.add_boundary_constant((lb, ub))
         elif op == 56:  # (*LCA*)
+            line = line[1:]
             data = [ord(ch) for ch in line[:line.index("'")]]
             q = store.add_multiple_constant(data)
 
