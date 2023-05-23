@@ -1,12 +1,6 @@
 """ The Store, as per P2 naming, is the data memory space. """
 import unittest
 
-"""The Store Layout from the lowest addresses:
-- 0..MAXSTK is the Stack
-- MAXSTK+1..OVERI is the Integer Constant Table, pointed by ICP
-- MAXSTK+1..OVERI is the Integer Constant Table, pointed by ICP
-"""
-
 
 class StoreConfiguration:
     maximum_stack_size = 20_000
@@ -188,5 +182,5 @@ class TestStore(unittest.TestCase):
 
         constant_address = store.pointers.boundary_const_table_address
         self.assertEqual(1, store[constant_address][1])
-        self.assertEqual(5, store[constant_address+1][1])
+        self.assertEqual(5, store[constant_address + 1][1])
         self.assertEqual(constant_address + 1, q)  # The pointed address is the upper bound
