@@ -61,21 +61,11 @@ code = [Code() for _ in range(PCMAX)]
 
 # Types are : INT (VI), REEL (VR), BOOL (VB), SETT (VS), ADR (VA), MARK (VM), UNDEF
 
-class Pointers:
-    def __init__(self):
-        # self.icp: int = MAXSTK + 1
-        self.rcp: int = OVERI + 1
-        self.scp: int = OVERR + 1
-        self.bcp: int = OVERS + 2
-        self.mcp: int = OVERB + 1
-
 
 def load(prd, store: Store):
     labeltab = []
-    pointers = Pointers()
 
     def init():
-        nonlocal pointers
         nonlocal labeltab
         labeltab = [(-1, 'ENTERED') for _ in range(MAXLABEL + 1)]
 
@@ -116,8 +106,6 @@ def load(prd, store: Store):
 
     def assemble(line, pc, store):
         """TRANSLATE SYMBOLIC CODE INTO MACHINE CODE AND context.store"""
-        nonlocal pointers
-
         name, line = get_name(line)
 
         op = instructions.index(name)
