@@ -79,17 +79,16 @@ def load(prd, store: Store):
         nonlocal labeltab
         labeltab = [(-1, 'ENTERED') for _ in range(MAXLABEL + 1)]
 
-    def get_name(ch, line):
-        word = ch
-        w1, line = string_buffer.parse_char(line)
-        w2, line = string_buffer.parse_char(line)
-        word += w1
-        word += w2
+    def get_name(line):
+        line = line.lstrip()
+        word = line[:2]
+        line = line[2:]
 
         if len(line):
-            ch, line = string_buffer.parse_char(line)
+            word += line[0]
+            line = line[1:]
 
-        return word, line, ch
+        return word, line
 
     def lookup(pc, label_id):
         value, status = labeltab[label_id]
@@ -115,11 +114,13 @@ def load(prd, store: Store):
 
         return '', line, lookup(pc, x)
 
-    def assemble(ch, line, pc, store):
+    def assemble(line, pc, store):
         """TRANSLATE SYMBOLIC CODE INTO MACHINE CODE AND context.store"""
         nonlocal pointers
 
-        name, line, ch = get_name(ch, line)
+        name, line = get_name(line)
+        ch = line[0]
+        line = line[1:]
 
         op = instructions.index(name)
         p = 0
@@ -144,7 +145,7 @@ def load(prd, store: Store):
         elif op in (13, 23, 24, 25):  # (*ENT,UJP,FJP,XJP*)
             _, _, q = label_search(pc, ch + line)
         elif op == 15:  # (*CSP*)
-            name, _, _ = get_name(ch, line)
+            name, _ = get_name(line)
             while sptable[q] != name:
                 q += 1
         elif op == 7:  # (*LDC*)
@@ -236,8 +237,7 @@ def load(prd, store: Store):
                         label_value = pc
                     update(x, label_value)
                 elif ch == ' ':
-                    ch, line = string_buffer.parse_char(line)
-                    pc = assemble(ch, line, pc, store)
+                    pc = assemble(line, pc, store)
             else:
                 break
 
