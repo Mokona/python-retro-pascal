@@ -64,7 +64,7 @@ def load(prd, store: Store):
                         label_value, line = string_buffer.parse_integer(line)
                     else:
                         label_value = pc
-                    labels.update(x, label_value, code)
+                    labels.declare(x, label_value, code)
                 elif ch == ' ':
                     op, p, q = assemble(line, pc, store, labels)
                     code[pc].op = op

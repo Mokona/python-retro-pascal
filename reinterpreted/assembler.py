@@ -51,7 +51,7 @@ def assemble(line, pc, store, labels: Labels):
         q, _ = string_buffer.parse_integer(line)
     elif op == 12:  # (*CUP*)
         p, line = string_buffer.parse_integer(line)
-        q = labels.label_search(pc, line)
+        q = labels.add_reference(line, pc)
     elif op == 11:  # (*MST*)
         p, _ = string_buffer.parse_integer(line)
     elif op == 14:  # (*RET*)
@@ -59,7 +59,7 @@ def assemble(line, pc, store, labels: Labels):
     elif op in (1, 3, 5, 9, 10, 16, 55, 57):  # (*LDO,SRO,LAO,IND,INC,IXA,MOV,DEC*)
         q, _ = string_buffer.parse_integer(line)
     elif op in (13, 23, 24, 25):  # (*ENT,UJP,FJP,XJP*)
-        q = labels.label_search(pc, line)
+        q = labels.add_reference(line, pc)
     elif op == 15:  # (*CSP*)
         name, _ = get_name(line)
         while sptable[q] != name:
