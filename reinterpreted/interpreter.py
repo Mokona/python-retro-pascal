@@ -4,13 +4,6 @@ from math import sin, cos, exp, log, sqrt, atan, trunc
 from reinterpreted.int_context import Context
 from translation import streams
 
-MAXSTK: int = 20000  # (* SIZE OF VARIABLE context.store *)  # Extra store space is needed for Compiling the Compiler
-OVERI: int = MAXSTK + 5  # (* SIZE OF INTEGER CONSTANT TABLE = 5 *)
-OVERR: int = OVERI + 5  # (* SIZE OF REAL CONSTANT TABLE = 5 *)
-OVERS: int = OVERR + 70  # (* SIZE OF SET CONSTANT TABLE = 70 *)
-OVERB: int = OVERS + 4  # (* SIZE OF BOUNDARY CONSTANT TABLE = 4 *)
-OVERM: int = OVERB + 1300  # (* SIZE OF MULTIPLE CONSTANT TABLE = 1300 *)
-MAXSTR = OVERM + 1  #
 INPUTADR = 4  # (* ABSOLUTE ADDRESS *)
 OUTPUTADR = 5  #
 PRDADR = 6  #
@@ -231,7 +224,7 @@ def ex0(op, p, q, context):
         elif p == 3:
             context.store[context.sp] = ('BOOL', q == 1)
         else:
-            context.store[context.sp] = ('ADR', MAXSTR)
+            context.store[context.sp] = ('ADR', context.store.highest_address)
     elif op == 8:  # (*LCI*)
         push(context)
         context.store[context.sp] = context.store[q]

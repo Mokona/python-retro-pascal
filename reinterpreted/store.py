@@ -29,10 +29,13 @@ class RangedPointer:
 class Pointers:
     def __init__(self, configuration: StoreConfiguration):
         self.integer_const_table_address = configuration.maximum_stack_size + 1
+
+        # TODO: This can be removed
         self.real_const_table_address = self.integer_const_table_address + configuration.integer_const_table_size
         self.set_const_table_address = self.real_const_table_address + configuration.real_const_table_size
         self.boundary_const_table_address = self.set_const_table_address + configuration.set_const_table_size
         self.multiple_const_table_address = self.boundary_const_table_address + configuration.boundary_const_table_size
+
         self.highest_address = self.multiple_const_table_address + self.multiple_const_table_address + 1
 
         self.int_ranged_ptr = RangedPointer(self.integer_const_table_address, self.real_const_table_address)
@@ -50,6 +53,7 @@ class Store:
         self.pointers = Pointers(configuration)
         self.store: list[tuple] = [('UNDEF', None) for _ in range(self.pointers.highest_address)]
         self.stack_size = configuration.maximum_stack_size
+        self.highest_address = self.pointers.highest_address
 
         for i in self.pointers.int_ranged_ptr.get_range():
             self.store[i] = ('INT', 0)
