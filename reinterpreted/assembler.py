@@ -129,30 +129,28 @@ def assemble(line, pc, store, labels: Labels):
 
 def generate(prd, pc, store: Store, labels: Labels, code: list[Code]):
     while line := prd.readline():
-        if len(line.strip()) > 0:
-            ch = line[0]
-            line = line[1:]
-            if ch == 'I':
-                pass  # Ignored
-            elif ch == 'L':
-                x, line = string_buffer.parse_integer(line)
-                if line:
-                    ch, line = string_buffer.parse_char(line)
-                if ch == '=':
-                    label_value, line = string_buffer.parse_integer(line)
-                else:
-                    label_value = pc
-                labels.declare(x, label_value, code)
-            elif ch == ' ':
-                op, p, q = assemble(line, pc, store, labels)
-                code[pc].op = op
-                code[pc].p = p
-                code[pc].q = q
-
-                pc += 1
-
-        else:
+        if len(line.strip()) == 0:  # End of listing / blank line, stop assembling
             break
+
+        ch, line = line[0], line[1:]
+
+        if ch == 'I':  # Ignore comments
+            pass
+        elif ch == 'L':  # Define labels
+            label_id, line = string_buffer.parse_integer(line)
+            line = line.strip()
+            if line and line[0] == '=':
+                label_value, _ = string_buffer.parse_integer(line[1:])
+            else:
+                label_value = pc
+            labels.declare(label_id, label_value, code)
+        elif ch == ' ':  # Assemble and store instructions
+            op, p, q = assemble(line, pc, store, labels)
+            code[pc].op = op
+            code[pc].p = p
+            code[pc].q = q
+
+            pc += 1
 
 
 def load(prd, store: Store, code):
