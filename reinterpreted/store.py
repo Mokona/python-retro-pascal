@@ -28,21 +28,19 @@ class RangedPointer:
 
 class Pointers:
     def __init__(self, configuration: StoreConfiguration):
-        self.integer_const_table_address = configuration.maximum_stack_size + 1
+        integer_const_table_address = configuration.maximum_stack_size + 1
+        real_const_table_address = integer_const_table_address + configuration.integer_const_table_size
+        set_const_table_address = real_const_table_address + configuration.real_const_table_size
+        boundary_const_table_address = set_const_table_address + configuration.set_const_table_size
+        multiple_const_table_address = boundary_const_table_address + configuration.boundary_const_table_size
 
-        # TODO: This can be removed
-        self.real_const_table_address = self.integer_const_table_address + configuration.integer_const_table_size
-        self.set_const_table_address = self.real_const_table_address + configuration.real_const_table_size
-        self.boundary_const_table_address = self.set_const_table_address + configuration.set_const_table_size
-        self.multiple_const_table_address = self.boundary_const_table_address + configuration.boundary_const_table_size
+        self.highest_address = multiple_const_table_address + multiple_const_table_address + 1
 
-        self.highest_address = self.multiple_const_table_address + self.multiple_const_table_address + 1
-
-        self.int_ranged_ptr = RangedPointer(self.integer_const_table_address, self.real_const_table_address)
-        self.real_ranged_ptr = RangedPointer(self.real_const_table_address, self.set_const_table_address)
-        self.set_ranged_ptr = RangedPointer(self.set_const_table_address, self.boundary_const_table_address)
-        self.boundary_ranged_ptr = RangedPointer(self.boundary_const_table_address, self.multiple_const_table_address)
-        self.multiple_ranged_ptr = RangedPointer(self.multiple_const_table_address, self.highest_address)
+        self.int_ranged_ptr = RangedPointer(integer_const_table_address, real_const_table_address)
+        self.real_ranged_ptr = RangedPointer(real_const_table_address, set_const_table_address)
+        self.set_ranged_ptr = RangedPointer(set_const_table_address, boundary_const_table_address)
+        self.boundary_ranged_ptr = RangedPointer(boundary_const_table_address, multiple_const_table_address)
+        self.multiple_ranged_ptr = RangedPointer(multiple_const_table_address, self.highest_address)
 
 
 class Store:
@@ -156,17 +154,17 @@ class TestStore(unittest.TestCase):
 
     def test_store_constant_tables_are_initialized_to_their_types(self):
         store = Store(self.MockStoreConfiguration())
-        self.assertEqual('INT', store[store.pointers.integer_const_table_address][0])
-        self.assertEqual('REEL', store[store.pointers.real_const_table_address][0])
-        self.assertEqual('SETT', store[store.pointers.set_const_table_address][0])
-        self.assertEqual('INT', store[store.pointers.boundary_const_table_address][0])
-        self.assertEqual('INT', store[store.pointers.multiple_const_table_address][0])
+        self.assertEqual('INT', store[store.pointers.int_ranged_ptr.begin][0])
+        self.assertEqual('REEL', store[store.pointers.real_ranged_ptr.begin][0])
+        self.assertEqual('SETT', store[store.pointers.set_ranged_ptr.begin][0])
+        self.assertEqual('INT', store[store.pointers.boundary_ranged_ptr.begin][0])
+        self.assertEqual('INT', store[store.pointers.multiple_ranged_ptr.begin][0])
 
     def test_a_integer_constant_can_be_added_to_store(self):
         store = Store(self.MockStoreConfiguration())
         q = store.add_int_constant(10)
 
-        constant_address = store.pointers.integer_const_table_address
+        constant_address = store.pointers.int_ranged_ptr.begin
         self.assertEqual(10, store[constant_address][1])
         self.assertEqual(constant_address, q)
 
@@ -181,7 +179,7 @@ class TestStore(unittest.TestCase):
         store = Store(self.MockStoreConfiguration())
         q = store.add_real_constant(10.0)
 
-        constant_address = store.pointers.real_const_table_address
+        constant_address = store.pointers.real_ranged_ptr.begin
         self.assertEqual(10.0, store[constant_address][1])
         self.assertEqual(constant_address, q)
 
@@ -189,7 +187,7 @@ class TestStore(unittest.TestCase):
         store = Store(self.MockStoreConfiguration())
         q = store.add_set_constant({1, 2, 3})
 
-        constant_address = store.pointers.set_const_table_address
+        constant_address = store.pointers.set_ranged_ptr.begin
         self.assertEqual({1, 2, 3}, store[constant_address][1])
         self.assertEqual(constant_address, q)
 
@@ -197,7 +195,7 @@ class TestStore(unittest.TestCase):
         store = Store(self.MockStoreConfiguration())
         q = store.add_boundary_constant((1, 5))
 
-        constant_address = store.pointers.boundary_const_table_address
+        constant_address = store.pointers.boundary_ranged_ptr.begin
         self.assertEqual(1, store[constant_address][1])
         self.assertEqual(5, store[constant_address + 1][1])
         self.assertEqual(constant_address + 1, q)  # The pointed address is the upper bound
@@ -206,7 +204,7 @@ class TestStore(unittest.TestCase):
         store = Store(self.MockStoreConfiguration())
         q = store.add_multiple_constant([10, 20, 30])
 
-        constant_address = store.pointers.multiple_const_table_address
+        constant_address = store.pointers.multiple_ranged_ptr.begin
         self.assertEqual(10, store[constant_address][1])
         self.assertEqual(20, store[constant_address + 1][1])
         self.assertEqual(30, store[constant_address + 2][1])
