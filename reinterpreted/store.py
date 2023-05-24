@@ -45,6 +45,7 @@ class Pointers:
 class Store:
     def __init__(self, configuration: StoreConfiguration):
         # The store consists of tuples of (Type, Value)
+        # Types are : INT (VI), REEL (VR), BOOL (VB), SETT (VS), ADR (VA), MARK (VM), UNDEF
 
         self.pointers = Pointers(configuration)
         self.store: list[tuple] = [('UNDEF', None) for _ in range(self.pointers.highest_address)]
