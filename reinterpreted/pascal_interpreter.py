@@ -4,6 +4,7 @@ from os.path import splitext
 
 from reinterpreted.assembler import load
 from reinterpreted.code import Code
+from reinterpreted.int_context import Context
 from reinterpreted.store import Store, StoreConfiguration
 from translation import streams
 
@@ -89,7 +90,7 @@ def eoln(context):
     context.store[context.sp] = ('BOOL', result)
 
 
-def writestr(context: "Context"):
+def writestr(context: Context):
     _, file_id = context.store[context.sp]
     stream = get_stream(context, file_id)
 
@@ -149,7 +150,7 @@ def file_eof(context):
     context.store[context.sp] = ('BOOL', stream.eof())
 
 
-def call_sp(q, context: "Context"):
+def call_sp(q, context: Context):
     if q == 0:  # (*GET*)
         getfile(context)
     elif q == 1:  # (*PUT*)
@@ -535,17 +536,6 @@ def ex3(op, p, q, context):
         return False
 
     return True
-
-
-class Context:
-    def __init__(self, input_stream, output_stream, input_file, output_file, store):
-        self.pc = 0
-        self.mp = 0  # Beginning of Data segment
-        self.sp = -1  # Top of Stack
-        self.np = MAXSTK + 1  # Dynamically allocated Area
-
-        self.files = [input_stream, output_stream, input_file, output_file]
-        self.store = store
 
 
 def interpret(input_stream, output_stream, input_file, output_file, code, store):

@@ -49,6 +49,7 @@ class Store:
 
         self.pointers = Pointers(configuration)
         self.store: list[tuple] = [('UNDEF', None) for _ in range(self.pointers.highest_address)]
+        self.stack_size = configuration.maximum_stack_size
 
         for i in self.pointers.int_ranged_ptr.get_range():
             self.store[i] = ('INT', 0)
