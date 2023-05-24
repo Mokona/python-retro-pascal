@@ -52,17 +52,6 @@ def load(prd, store: Store):
         nonlocal labeltab
         labeltab = [(-1, 'ENTERED') for _ in range(MAXLABEL + 1)]
 
-    def get_name(line):
-        line = line.lstrip()
-        word = line[:2]
-        line = line[2:]
-
-        if len(line):
-            word += line[0]
-            line = line[1:]
-
-        return word, line
-
     def lookup(pc, label_id):
         value, status = labeltab[label_id]
 
@@ -126,7 +115,7 @@ def load(prd, store: Store):
                         label_value = pc
                     update(x, label_value)
                 elif ch == ' ':
-                    op, p, q = assemble(get_name, label_search, line, pc, store)
+                    op, p, q = assemble(label_search, line, pc, store)
                     code[pc].op = op
                     code[pc].p = p
                     code[pc].q = q

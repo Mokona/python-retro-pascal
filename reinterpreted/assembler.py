@@ -21,7 +21,19 @@ sptable = ['GET', 'PUT', 'RST', 'RLN', 'NEW',
            'SAV']
 
 
-def assemble(get_name, label_search, line, pc, store):
+def get_name(line):
+    line = line.lstrip()
+    word = line[:2]
+    line = line[2:]
+
+    if len(line):
+        word += line[0]
+        line = line[1:]
+
+    return word, line
+
+
+def assemble(label_search, line, pc, store):
     """TRANSLATE SYMBOLIC CODE INTO MACHINE CODE AND context.store"""
     name, line = get_name(line)
 
