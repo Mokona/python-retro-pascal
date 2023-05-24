@@ -166,5 +166,10 @@ def load(prd, store: Store, code):
 
 
 class TestAssembler(unittest.TestCase):
-    def test_one(self):
-        pass
+    def test_can_assemble_LOD_instruction(self):
+        labels = Labels(2)
+        op, p, q = assemble(' LOD   4   6', 0, [], labels)
+
+        self.assertEqual(0, op)
+        self.assertEqual(4, p)
+        self.assertEqual(6, q)
