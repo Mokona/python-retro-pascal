@@ -29,8 +29,6 @@ OUTPUTADR = 5  #
 PRDADR = 6  #
 PRRADR = 7  #
 
-code = [Code() for _ in range(PCMAX)]
-
 
 def base(context, ld):
     ad = context.mp
@@ -550,8 +548,8 @@ class Context:
         self.store = store
 
 
-def interpret(input_stream, output_stream, input_file, output_file, context):
-    context = Context(input_stream, output_stream, input_file, output_file, context)
+def interpret(input_stream, output_stream, input_file, output_file, code, store):
+    context = Context(input_stream, output_stream, input_file, output_file, store)
 
     context.store[INPUTADR] = ('INT', 0)
     context.store[PRDADR] = ('INT', 0)
@@ -592,12 +590,13 @@ def main():
     prr_filename = base_filename + ".out"
 
     store = Store(StoreConfiguration())
+    code = [Code() for _ in range(PCMAX)]
 
     with open(prd_filename) as prd:
         load(prd, store, code)
         with open(prr_filename, "w") as prr:
             input_stream = streams.InputStream(4, sys.stdin)
-            interpret(input_stream, sys.stdout, prd, prr, store)
+            interpret(input_stream, sys.stdout, prd, prr, code, store)
 
 
 if __name__ == '__main__':
