@@ -2,6 +2,8 @@ import io
 from math import sin, cos, exp, log, sqrt, atan, trunc
 from os.path import splitext
 
+from reinterpreted import asm_labels
+from reinterpreted.asm_labels import Labels
 from reinterpreted.assembler import assemble
 from reinterpreted.store import Store, StoreConfiguration
 from translation import streams, string_buffer
@@ -46,58 +48,7 @@ code = [Code() for _ in range(PCMAX)]
 
 
 def load(prd, store: Store):
-    labeltab = []
-
-    def init():
-        nonlocal labeltab
-        labeltab = [(-1, 'ENTERED') for _ in range(MAXLABEL + 1)]
-
-    def lookup(pc, label_id):
-        value, status = labeltab[label_id]
-
-        vq = -1
-
-        if status == 'ENTERED':
-            if value == -1:
-                labeltab[label_id] = (pc, status)
-                vq = -1
-            else:
-                vq = value
-                labeltab[label_id] = (pc, status)
-        elif status == 'DEFINED':
-            vq = value
-
-        return vq
-
-    def label_search(pc, line):
-        l_index = line.index('L')
-        line = line[l_index + 1:]
-        x, _ = string_buffer.parse_integer(line)
-
-        return lookup(pc, x)
-
-    def update(label_id, label_value):
-        nonlocal labeltab
-
-        value, status = labeltab[label_id]
-        if status == 'DEFINED':
-            print("Duplicated label")
-        else:
-            if value != -1:  # Forward reference
-                current, _ = labeltab[label_id]
-                end_list = False
-                while not end_list:
-                    c = code[current]
-                    successor = c.q
-                    c.q = label_value
-                    if successor == -1:
-                        end_list = True
-                    else:
-                        current = successor
-
-            labeltab[label_id] = (label_value, 'DEFINED')
-
-    def generate(pc, store):
+    def generate(pc, store: Store, labels: Labels):
         nonlocal prd
         while line := prd.readline():
             if len(line.strip()) > 0:
@@ -113,9 +64,9 @@ def load(prd, store: Store):
                         label_value, line = string_buffer.parse_integer(line)
                     else:
                         label_value = pc
-                    update(x, label_value)
+                    labels.update(x, label_value, code)
                 elif ch == ' ':
-                    op, p, q = assemble(label_search, line, pc, store)
+                    op, p, q = assemble(line, pc, store, labels)
                     code[pc].op = op
                     code[pc].p = p
                     code[pc].q = q
@@ -125,9 +76,9 @@ def load(prd, store: Store):
             else:
                 break
 
-    init()
-    generate(BEGINCODE, store)
-    generate(0, store)  # Inserting start of code (which is at the end of assembly code, after a blank line)
+    labels = Labels()
+    generate(BEGINCODE, store, labels)
+    generate(0, store, labels)  # Inserting start of code (which is at the end of assembly code, after a blank line)
 
 
 def base(context, ld):
