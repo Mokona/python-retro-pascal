@@ -64,11 +64,17 @@ class Store:
         for i in self.pointers.multiple_ranged_ptr.get_range():
             self.store[i] = ('INT', 0)
 
-    def __setitem__(self, pc, instruction):
-        self.store[pc] = instruction
+    def __setitem__(self, address, instruction):
+        self.store[address] = instruction
 
-    def __getitem__(self, pc):
-        return self.store[pc]
+    def __getitem__(self, address):
+        return self.store[address]
+
+    def get_value(self, address):
+        return self.__getitem__(address)[1]
+
+    def get_type(self, address):
+        return self.__getitem__(address)[0]
 
     def __add_value_in_range(self, typed_value, ranged_ptr: RangedPointer):
         self.store[ranged_ptr.pointer] = typed_value
@@ -151,6 +157,8 @@ class TestStore(unittest.TestCase):
         store[0] = 'INT', 4
 
         self.assertEqual(('INT', 4), store[0])
+        self.assertEqual(4, store.get_value(0))
+        self.assertEqual('INT', store.get_type(0))
 
     def test_store_constant_tables_are_initialized_to_their_types(self):
         store = Store(self.MockStoreConfiguration())
