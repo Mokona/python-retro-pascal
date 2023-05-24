@@ -22,20 +22,15 @@ class Labels:
         value, status = self.labels[label_id]
         if status == 'DEFINED':
             raise RuntimeError("Duplicated label")
-        else:
-            if value != -1:  # Forward reference
-                current, _ = self.labels[label_id]
-                end_list = False
-                while not end_list:
-                    c = code[current]
-                    successor = c.q
-                    c.q = label_value
-                    if successor == -1:
-                        end_list = True
-                    else:
-                        current = successor
 
-            self.labels[label_id] = (label_value, 'DEFINED')
+        if value != -1:  # Forward reference
+            chained_address, _ = self.labels[label_id]
+            while chained_address != -1:
+                c = code[chained_address]
+                chained_address = c.q
+                c.q = label_value
+
+        self.labels[label_id] = (label_value, 'DEFINED')
 
 
 class TestLabels(unittest.TestCase):
