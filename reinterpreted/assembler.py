@@ -34,6 +34,14 @@ def get_name(line):
     return word, line
 
 
+def get_label_id(line):
+    l_index = line.index('L')
+    line = line[l_index + 1:]
+    x, _ = string_buffer.parse_integer(line)
+
+    return x
+
+
 def assemble(line, pc, store, labels: Labels):
     """TRANSLATE SYMBOLIC CODE INTO MACHINE CODE AND context.store"""
     name, line = get_name(line)
@@ -51,7 +59,8 @@ def assemble(line, pc, store, labels: Labels):
         q, _ = string_buffer.parse_integer(line)
     elif op == 12:  # (*CUP*)
         p, line = string_buffer.parse_integer(line)
-        q = labels.add_reference(line, pc)
+        label_id = get_label_id(line)
+        q = labels.add_reference(label_id, pc)
     elif op == 11:  # (*MST*)
         p, _ = string_buffer.parse_integer(line)
     elif op == 14:  # (*RET*)
@@ -59,7 +68,8 @@ def assemble(line, pc, store, labels: Labels):
     elif op in (1, 3, 5, 9, 10, 16, 55, 57):  # (*LDO,SRO,LAO,IND,INC,IXA,MOV,DEC*)
         q, _ = string_buffer.parse_integer(line)
     elif op in (13, 23, 24, 25):  # (*ENT,UJP,FJP,XJP*)
-        q = labels.add_reference(line, pc)
+        label_id = get_label_id(line)
+        q = labels.add_reference(label_id, pc)
     elif op == 15:  # (*CSP*)
         name, _ = get_name(line)
         while sptable[q] != name:
