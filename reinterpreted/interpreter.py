@@ -23,40 +23,36 @@ def get_stream(context, stream_id) -> streams.InputStream | io.IOBase:
 
 
 def file_get(context):
-    file_id = context.store.get_value(context.sp)
+    _, file_id = context.pop()
     if file_id in (OUTPUTADR, PRRADR):
         raise RuntimeError("Get on Output. Error")
 
     value = get_stream(context, file_id).read()
     context.store[file_id] = ('INT', value)
-    context.sp -= 1
 
 
 def file_put(context):
-    file_id = context.store.get_value(context.sp)
+    _, file_id = context.pop()
     if file_id in (INPUTADR, PRDADR):
         raise RuntimeError("Put on Input. Error")
 
     value = context.store.get_value(file_id)
     get_stream(context, file_id).write(str([value]))
     context.store[file_id] = ('UNDEF', 0)
-    context.sp -= 1
 
 
 def read_line(context):
-    file_id = context.store.get_value(context.sp)
+    _, file_id = context.pop()
     stream = get_stream(context, file_id)
     stream.read_line()
     value = stream.read()
     context.store[INPUTADR] = ('INT', value)
-    context.sp -= 1
 
 
 def write_line(context):
-    file_id = context.store.get_value(context.sp)
+    _, file_id = context.pop()
     stream = get_stream(context, file_id)
     stream.writelines(["\n"])
-    context.sp -= 1
 
 
 def eoln(context):
@@ -132,9 +128,8 @@ def call_sp(q, context: Context):
     elif q == 1:  # (*PUT*)
         file_put(context)
     elif q == 2:  # (*RST*)
-        value = context.store.get_value(context.sp)
+        _, value = context.pop()
         context.np = value
-        context.sp -= 1
     elif q == 3:  # (*RLN*)
         read_line(context)
     elif q == 4:  # (*NEW*)
@@ -177,10 +172,9 @@ def call_sp(q, context: Context):
         v = context.store.get_value(context.sp)
         context.store[context.sp] = ('REEL', atan(v))
     elif q == 20:  # (*SAV*)
-        t, addr = context.store[context.sp]
+        t, addr = context.pop()
         assert (t == 'ADR')
         context.store[addr] = ('ADR', context.np)
-        context.sp -= 1
 
 
 def ex0(op, p, q, context):
@@ -196,11 +190,9 @@ def ex0(op, p, q, context):
             raise RuntimeError("Value Undefined")
         context.push((t, v))
     elif op == 2:  # (*STR*)
-        context.store[base(context, p) + q] = context.store[context.sp]
-        context.sp -= 1
+        context.store[base(context, p) + q] = context.pop()
     elif op == 3:  # (*SRO*)
-        context.store[q] = context.store[context.sp]
-        context.sp -= 1
+        context.store[q] = context.pop()
     elif op == 4:  # (*LDA*)
         context.push(('ADR', base(context, p) + q))
     elif op == 5:  # (*LAO*)
@@ -350,14 +342,12 @@ def ex1(op, p, q, context):
     if op == 23:  # (*UJP*)
         context.pc = q
     if op == 24:  # (*FJP*)
-        b = context.store.get_value(context.sp)
+        _, b = context.pop()
         if not b:
             context.pc = q
-        context.sp -= 1
     if op == 25:  # (*XJP*)
-        v = context.store.get_value(context.sp)
+        _, v = context.pop()
         context.pc = v + q
-        context.sp -= 1
     if op == 26:  # (*CHK*)
         v1 = context.store.get_value(context.sp)
         lower_bound = context.store.get_value(q - 1)
@@ -484,9 +474,8 @@ def ex3(op, p, q, context):
         b_value = context.store.get_value(context.sp + 1)
         context.store[context.sp] = ('REEL', a_value / b_value)
     elif op == 55:  # (*MOV*)
-        i1_value = context.store.get_value(context.sp - 1)
-        i2_value = context.store.get_value(context.sp)
-        context.sp -= 2
+        _, i2_value = context.pop()
+        _, i1_value = context.pop()
         for i in range(q):
             context.store[i1_value + i] = context.store[i2_value + i]
     elif op == 56:  # (*LCA*)
