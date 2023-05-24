@@ -2,12 +2,10 @@ import unittest
 
 from translation import string_buffer
 
-MAX_LABELS = 1550
-
 
 class Labels:
-    def __init__(self):
-        self.labeltab = [(-1, 'ENTERED') for _ in range(MAX_LABELS + 1)]
+    def __init__(self, max_labels):
+        self.labeltab = [(-1, 'ENTERED') for _ in range(max_labels + 1)]
 
     def __lookup(self, pc, label_id):
         value, status = self.labeltab[label_id]

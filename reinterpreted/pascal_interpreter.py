@@ -31,7 +31,7 @@ OUTPUTADR = 5  #
 PRDADR = 6  #
 PRRADR = 7  #
 
-MAXLABEL = 1550
+MAX_LABELS = 1550
 
 
 class Code:
@@ -76,7 +76,7 @@ def load(prd, store: Store):
             else:
                 break
 
-    labels = Labels()
+    labels = Labels(MAX_LABELS)
     generate(BEGINCODE, store, labels)
     generate(0, store, labels)  # Inserting start of code (which is at the end of assembly code, after a blank line)
 
