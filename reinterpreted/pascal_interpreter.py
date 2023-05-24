@@ -2,11 +2,10 @@ import io
 from math import sin, cos, exp, log, sqrt, atan, trunc
 from os.path import splitext
 
-from reinterpreted.asm_labels import Labels
-from reinterpreted.assembler import assemble
+from reinterpreted.assembler import load
 from reinterpreted.code import Code
 from reinterpreted.store import Store, StoreConfiguration
-from translation import streams, string_buffer
+from translation import streams
 
 """This is a P-Code Interpreter at P2 level.
 
@@ -25,52 +24,12 @@ OVERS: int = OVERR + 70  # (* SIZE OF SET CONSTANT TABLE = 70 *)
 OVERB: int = OVERS + 4  # (* SIZE OF BOUNDARY CONSTANT TABLE = 4 *)
 OVERM: int = OVERB + 1300  # (* SIZE OF MULTIPLE CONSTANT TABLE = 1300 *)
 MAXSTR = OVERM + 1  #
-BEGINCODE = 3  #
 INPUTADR = 4  # (* ABSOLUTE ADDRESS *)
 OUTPUTADR = 5  #
 PRDADR = 6  #
 PRRADR = 7  #
 
-MAX_LABELS = 1550
-
 code = [Code() for _ in range(PCMAX)]
-
-
-# Types are : INT (VI), REEL (VR), BOOL (VB), SETT (VS), ADR (VA), MARK (VM), UNDEF
-
-
-def load(prd, store: Store):
-    def generate(pc, store: Store, labels: Labels):
-        nonlocal prd
-        while line := prd.readline():
-            if len(line.strip()) > 0:
-                ch = line[0]
-                line = line[1:]
-                if ch == 'I':
-                    pass  # Ignored
-                elif ch == 'L':
-                    x, line = string_buffer.parse_integer(line)
-                    if line:
-                        ch, line = string_buffer.parse_char(line)
-                    if ch == '=':
-                        label_value, line = string_buffer.parse_integer(line)
-                    else:
-                        label_value = pc
-                    labels.declare(x, label_value, code)
-                elif ch == ' ':
-                    op, p, q = assemble(line, pc, store, labels)
-                    code[pc].op = op
-                    code[pc].p = p
-                    code[pc].q = q
-
-                    pc += 1
-
-            else:
-                break
-
-    labels = Labels(MAX_LABELS)
-    generate(BEGINCODE, store, labels)
-    generate(0, store, labels)  # Inserting start of code (which is at the end of assembly code, after a blank line)
 
 
 def base(context, ld):
@@ -635,7 +594,7 @@ def main():
     store = Store(StoreConfiguration())
 
     with open(prd_filename) as prd:
-        load(prd, store)
+        load(prd, store, code)
         with open(prr_filename, "w") as prr:
             input_stream = streams.InputStream(4, sys.stdin)
             interpret(input_stream, sys.stdout, prd, prr, store)

@@ -1,7 +1,12 @@
 import unittest
 
 from reinterpreted.asm_labels import Labels
+from reinterpreted.code import Code
+from reinterpreted.store import Store
 from translation import string_buffer
+
+BEGINCODE = 3  #
+MAX_LABELS = 1550
 
 # Taken from P2, not really fitting the Python environment on a current PC
 LARGEINT = 524288  # (* = 2**19 *)
@@ -125,3 +130,38 @@ def assemble(line, pc, store, labels: Labels):
 class TestAssembler(unittest.TestCase):
     def test_one(self):
         pass
+
+
+def generate(prd, pc, store: Store, labels: Labels, code: list[Code]):
+    while line := prd.readline():
+        if len(line.strip()) > 0:
+            ch = line[0]
+            line = line[1:]
+            if ch == 'I':
+                pass  # Ignored
+            elif ch == 'L':
+                x, line = string_buffer.parse_integer(line)
+                if line:
+                    ch, line = string_buffer.parse_char(line)
+                if ch == '=':
+                    label_value, line = string_buffer.parse_integer(line)
+                else:
+                    label_value = pc
+                labels.declare(x, label_value, code)
+            elif ch == ' ':
+                op, p, q = assemble(line, pc, store, labels)
+                code[pc].op = op
+                code[pc].p = p
+                code[pc].q = q
+
+                pc += 1
+
+        else:
+            break
+
+
+def load(prd, store: Store, code):
+    labels = Labels(MAX_LABELS)
+    generate(prd, BEGINCODE, store, labels, code)
+    generate(prd, 0, store, labels,
+             code)  # Inserting start of code (which is at the end of assembly code, after a blank line)
