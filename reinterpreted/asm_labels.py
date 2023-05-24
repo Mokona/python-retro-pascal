@@ -31,7 +31,7 @@ class Labels:
     def declare(self, label_id, label_value, code):
         value, status = self.labeltab[label_id]
         if status == 'DEFINED':
-            print("Duplicated label")
+            raise RuntimeError("Duplicated label")
         else:
             if value != -1:  # Forward reference
                 current, _ = self.labeltab[label_id]
@@ -61,6 +61,20 @@ class TestLabels(unittest.TestCase):
         q = labels.add_reference(5, pc)
         q = labels.add_reference(5, 0)
         self.assertEqual(pc, q)
+
+    def test_lookup_of_defined_reference_gives_its_value(self):
+        labels = Labels(5)
+        code = [Code() for _ in range(25)]
+        code[10].q = labels.add_reference(5, 10)
+        labels.declare(5, 200, code)
+        code[20].q = labels.add_reference(5, 20)
+        self.assertEqual(200, code[20].q)
+
+    def test_cannot_declare_a_label_twice(self):
+        labels = Labels(5)
+        code = [Code() for _ in range(25)]
+        labels.declare(5, 200, code)
+        self.assertRaises(RuntimeError, labels.declare, 5, 300, code)
 
     def test_defining_the_label_gives_a_list_of_code_address_to_update(self):
         labels = Labels(5)
