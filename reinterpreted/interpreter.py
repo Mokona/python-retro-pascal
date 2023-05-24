@@ -18,10 +18,11 @@ def base(context, ld):
     return ad
 
 
-def push(context):
+def push(context, value):
     context.sp += 1
     if context.sp > context.np:
         raise RuntimeError("Store Overflow")
+    context.store[context.sp] = value
 
 
 def get_stream(context, stream_id) -> streams.InputStream | io.IOBase:
@@ -72,7 +73,7 @@ def eoln(context):
     context.store[context.sp] = ('BOOL', result)
 
 
-def writestr(context: Context):
+def write_string(context: Context):
     file_id = context.store.get_value(context.sp)
     stream = get_stream(context, file_id)
 
@@ -195,14 +196,12 @@ def ex0(op, p, q, context):
         t, v = context.store[ad]
         if t == 'UNDEF':
             raise RuntimeError("Value Undefined")
-        push(context)
-        context.store[context.sp] = context.store[ad]
+        push(context, (t, v))
     elif op == 1:  # (*LDO*)
         t, v = context.store[q]
         if t == 'UNDEF':
             raise RuntimeError("Value Undefined")
-        push(context)
-        context.store[context.sp] = t, v
+        push(context, (t, v))
     elif op == 2:  # (*STR*)
         context.store[base(context, p) + q] = context.store[context.sp]
         context.sp -= 1
@@ -210,27 +209,24 @@ def ex0(op, p, q, context):
         context.store[q] = context.store[context.sp]
         context.sp -= 1
     elif op == 4:  # (*LDA*)
-        push(context)
-        context.store[context.sp] = ('ADR', base(context, p) + q)
+        push(context, ('ADR', base(context, p) + q))
     elif op == 5:  # (*LAO*)
-        push(context)
-        context.store[context.sp] = ('ADR', q)
+        push(context, ('ADR', q))
     elif op == 6:  # (*STO*)
         t, adr = context.store[context.sp - 1]
         assert (t == 'ADR')
         context.store[adr] = context.store[context.sp]
         context.sp -= 2
     elif op == 7:  # (*LDC*)
-        push(context)
         if p == 1:
-            context.store[context.sp] = ('INT', q)
+            typed_value = ('INT', q)
         elif p == 3:
-            context.store[context.sp] = ('BOOL', q == 1)
+            typed_value = ('BOOL', q == 1)
         else:
-            context.store[context.sp] = ('ADR', context.store.highest_address)
+            typed_value = ('ADR', context.store.highest_address)
+        push(context, typed_value)
     elif op == 8:  # (*LCI*)
-        push(context)
-        context.store[context.sp] = context.store[q]
+        push(context, context.store[q])
     elif op == 9:  # (*IND*)
         adr = context.store.get_value(context.sp)
         adr += q
