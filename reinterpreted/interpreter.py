@@ -18,13 +18,6 @@ def base(context, ld):
     return ad
 
 
-def push(context, value):
-    context.sp += 1
-    if context.sp > context.np:
-        raise RuntimeError("Store Overflow")
-    context.store[context.sp] = value
-
-
 def get_stream(context, stream_id) -> streams.InputStream | io.IOBase:
     return context.files[stream_id - INPUTADR]
 
@@ -196,12 +189,12 @@ def ex0(op, p, q, context):
         t, v = context.store[ad]
         if t == 'UNDEF':
             raise RuntimeError("Value Undefined")
-        push(context, (t, v))
+        context.push((t, v))
     elif op == 1:  # (*LDO*)
         t, v = context.store[q]
         if t == 'UNDEF':
             raise RuntimeError("Value Undefined")
-        push(context, (t, v))
+        context.push((t, v))
     elif op == 2:  # (*STR*)
         context.store[base(context, p) + q] = context.store[context.sp]
         context.sp -= 1
@@ -209,9 +202,9 @@ def ex0(op, p, q, context):
         context.store[q] = context.store[context.sp]
         context.sp -= 1
     elif op == 4:  # (*LDA*)
-        push(context, ('ADR', base(context, p) + q))
+        context.push(('ADR', base(context, p) + q))
     elif op == 5:  # (*LAO*)
-        push(context, ('ADR', q))
+        context.push(('ADR', q))
     elif op == 6:  # (*STO*)
         t, adr = context.store[context.sp - 1]
         assert (t == 'ADR')
@@ -224,9 +217,9 @@ def ex0(op, p, q, context):
             typed_value = ('BOOL', q == 1)
         else:
             typed_value = ('ADR', context.store.highest_address)
-        push(context, typed_value)
+        context.push(typed_value)
     elif op == 8:  # (*LCI*)
-        push(context, context.store[q])
+        context.push(context.store[q])
     elif op == 9:  # (*IND*)
         adr = context.store.get_value(context.sp)
         adr += q
@@ -497,10 +490,7 @@ def ex3(op, p, q, context):
         for i in range(q):
             context.store[i1_value + i] = context.store[i2_value + i]
     elif op == 56:  # (*LCA*)
-        context.sp += 1
-        if context.sp >= context.np:
-            raise RuntimeError("Store overflow")
-        context.store[context.sp] = ('ADR', q)
+        context.push(('ADR', q))
     elif op == 57:  # (*DEC*)
         value = context.store.get_value(context.sp)
         context.store[context.sp] = ('INT', value - q)
