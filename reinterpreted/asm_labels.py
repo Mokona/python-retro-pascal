@@ -1,5 +1,6 @@
 import unittest
 
+from reinterpreted.code import Code
 from translation import string_buffer
 
 
@@ -66,12 +67,6 @@ class TestLabels(unittest.TestCase):
         self.assertEqual(pc, q)
 
     def test_defining_the_label_gives_a_list_of_code_address_to_update(self):
-        class Code:
-            def __init__(self):
-                self.op = 0
-                self.p = 0
-                self.q = 0
-
         labels = Labels(5)
         code = [Code() for _ in range(25)]
         code[10].q = labels.add_reference("L   5", 10)

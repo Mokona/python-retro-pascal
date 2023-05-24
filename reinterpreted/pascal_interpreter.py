@@ -2,9 +2,9 @@ import io
 from math import sin, cos, exp, log, sqrt, atan, trunc
 from os.path import splitext
 
-from reinterpreted import asm_labels
 from reinterpreted.asm_labels import Labels
 from reinterpreted.assembler import assemble
+from reinterpreted.code import Code
 from reinterpreted.store import Store, StoreConfiguration
 from translation import streams, string_buffer
 
@@ -32,14 +32,6 @@ PRDADR = 6  #
 PRRADR = 7  #
 
 MAX_LABELS = 1550
-
-
-class Code:
-    def __init__(self):
-        self.op = 0
-        self.p = 0
-        self.q = 0
-
 
 code = [Code() for _ in range(PCMAX)]
 
