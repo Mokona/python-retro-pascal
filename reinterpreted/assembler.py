@@ -157,9 +157,12 @@ def generate(prd, pc, store: Store, labels: Labels, code: list[Code]):
 
 def load(prd, store: Store, code):
     labels = Labels(MAX_LABELS)
+
+    # There are two generate calls. The first is the general source code to assemble
+    # starting from the BEGINCODE address. This part is ended by a blank line.
+    # It is followed by another generation of the startup code to be assembled at address 0.
     generate(prd, BEGINCODE, store, labels, code)
-    generate(prd, 0, store, labels,
-             code)  # Inserting start of code (which is at the end of assembly code, after a blank line)
+    generate(prd, 0, store, labels, code)
 
 
 class TestAssembler(unittest.TestCase):
