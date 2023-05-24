@@ -9,7 +9,7 @@ class Labels:
     def __init__(self):
         self.labeltab = [(-1, 'ENTERED') for _ in range(MAX_LABELS + 1)]
 
-    def lookup(self, pc, label_id):
+    def __lookup(self, pc, label_id):
         value, status = self.labeltab[label_id]
 
         vq = -1
@@ -31,7 +31,7 @@ class Labels:
         line = line[l_index + 1:]
         x, _ = string_buffer.parse_integer(line)
 
-        return self.lookup(pc, x)
+        return self.__lookup(pc, x)
 
     def update(self, label_id, label_value, code):
         value, status = self.labeltab[label_id]
