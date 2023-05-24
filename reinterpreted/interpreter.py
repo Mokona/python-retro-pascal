@@ -30,7 +30,7 @@ def get_stream(context, stream_id) -> streams.InputStream | io.IOBase:
 
 def getfile(context):
     file_id = context.store.get_value(context.sp)
-    if file_id in (5, 7):
+    if file_id in (OUTPUTADR, PRRADR):
         raise RuntimeError("Get on Output. Error")
 
     value = get_stream(context, file_id).read()
@@ -40,6 +40,9 @@ def getfile(context):
 
 def putfile(context):
     file_id = context.store.get_value(context.sp)
+    if file_id in (INPUTADR, PRDADR):
+        raise RuntimeError("Put on Input. Error")
+
     value = context.store.get_value(file_id)
     get_stream(context, file_id).write(str([value]))
     context.store[file_id] = ('UNDEF', 0)
