@@ -7,3 +7,5 @@ class Context:
 
         self.files = [input_stream, output_stream, input_file, output_file]
         self.store = store
+
+        self.running = True

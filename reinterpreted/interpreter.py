@@ -271,8 +271,6 @@ def ex0(op, p, q, context):
     elif op == 15:  # (*CSP*)
         call_sp(q, context)
 
-    return True
-
 
 def compare(context, q):
     adr1 = context.store.get_value(context.sp)
@@ -397,8 +395,6 @@ def ex1(op, p, q, context):
         v2 = context.store.get_value(context.sp + 1)
         context.store[context.sp] = ('REEL', v1 - v2)
 
-    return True
-
 
 def ex2(op, p, q, context):
     if op == 32:  # (*SGS*)
@@ -460,8 +456,6 @@ def ex2(op, p, q, context):
         v2 = context.store.get_value(context.sp + 1)
         context.store[context.sp] = ('SETT', v1.union(v2))
 
-    return True
-
 
 def ex3(op, p, q, context):
     if op == 48:  # (*INN*)
@@ -512,41 +506,28 @@ def ex3(op, p, q, context):
         value = context.store.get_value(context.sp)
         context.store[context.sp] = ('INT', value - q)
     if op == 58:  # (*STP*)
-        return False
-
-    return True
+        context.running = False
 
 
-def interpret(input_stream, output_stream, input_file, output_file, code, store):
-    context = Context(input_stream, output_stream, input_file, output_file, store)
-
+def initialize_files(context: Context):
     context.store[INPUTADR] = ('INT', 0)
     context.store[PRDADR] = ('INT', 0)
     context.store[OUTPUTADR] = ('UNDEF', 0)
     context.store[PRRADR] = ('UNDEF', 0)
 
-    interpreting = True
-    while interpreting:
+
+def interpret(input_stream, output_stream, input_file, output_file, code, store):
+    context = Context(input_stream, output_stream, input_file, output_file, store)
+    initialize_files(context)
+
+    split_op_func = [ex0, ex1, ex2, ex3]
+
+    while context.running:
         c = code[context.pc]
         op = c.op
         p = c.p
         q = c.q
 
-        # adjusted_sp = max(3, context.sp)
-        # print(f"{context.pc:3} {instructions[op]:3}, {p:2}, {q:2}, {context.store[adjusted_sp - 3:adjusted_sp]} \t {context.store[adjusted_sp:adjusted_sp + 3]}")
-        #
-        # adjusted_mp = max(0, context.mp)
-        # print(f"{context.mp:3} {context.store[adjusted_mp:adjusted_mp+5]}")
-
         context.pc += 1
 
-        split_op = op // 16
-
-        if split_op == 0:
-            interpreting = ex0(op, p, q, context)
-        elif split_op == 1:
-            interpreting = ex1(op, p, q, context)
-        elif split_op == 2:
-            interpreting = ex2(op, p, q, context)
-        else:
-            interpreting = ex3(op, p, q, context)
+        split_op_func[op // 16](op, p, q, context)
