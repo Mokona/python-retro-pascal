@@ -127,11 +127,6 @@ def assemble(line, pc, store, labels: Labels):
     return op, p, q
 
 
-class TestAssembler(unittest.TestCase):
-    def test_one(self):
-        pass
-
-
 def generate(prd, pc, store: Store, labels: Labels, code: list[Code]):
     while line := prd.readline():
         if len(line.strip()) > 0:
@@ -165,3 +160,8 @@ def load(prd, store: Store, code):
     generate(prd, BEGINCODE, store, labels, code)
     generate(prd, 0, store, labels,
              code)  # Inserting start of code (which is at the end of assembly code, after a blank line)
+
+
+class TestAssembler(unittest.TestCase):
+    def test_one(self):
+        pass
