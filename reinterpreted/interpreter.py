@@ -28,7 +28,7 @@ def get_stream(context, stream_id) -> streams.InputStream | io.IOBase:
     return context.files[stream_id - INPUTADR]
 
 
-def getfile(context):
+def file_get(context):
     file_id = context.store.get_value(context.sp)
     if file_id in (OUTPUTADR, PRRADR):
         raise RuntimeError("Get on Output. Error")
@@ -38,7 +38,7 @@ def getfile(context):
     context.sp -= 1
 
 
-def putfile(context):
+def file_put(context):
     file_id = context.store.get_value(context.sp)
     if file_id in (INPUTADR, PRDADR):
         raise RuntimeError("Put on Input. Error")
@@ -49,7 +49,7 @@ def putfile(context):
     context.sp -= 1
 
 
-def readline(context):
+def read_line(context):
     file_id = context.store.get_value(context.sp)
     stream = get_stream(context, file_id)
     stream.read_line()
@@ -58,7 +58,7 @@ def readline(context):
     context.sp -= 1
 
 
-def writeline(context):
+def write_line(context):
     file_id = context.store.get_value(context.sp)
     stream = get_stream(context, file_id)
     stream.writelines(["\n"])
@@ -134,15 +134,15 @@ def file_eof(context):
 
 def call_sp(q, context: Context):
     if q == 0:  # (*GET*)
-        getfile(context)
+        file_get(context)
     elif q == 1:  # (*PUT*)
-        putfile(context)
+        file_put(context)
     elif q == 2:  # (*RST*)
         value = context.store.get_value(context.sp)
         context.np = value
         context.sp -= 1
     elif q == 3:  # (*RLN*)
-        readline(context)
+        read_line(context)
     elif q == 4:  # (*NEW*)
         adr = context.store.get_value(context.sp)
         ad = context.np - adr
@@ -155,9 +155,9 @@ def call_sp(q, context: Context):
         context.store[ad] = ('ADR', context.np)
         context.sp -= 2
     elif q == 5:  # (*WLN*)
-        writeline(context)
+        write_line(context)
     elif q == 6:  # (*WRS*)
-        writestr(context)
+        write_string(context)
     elif q == 7:  # (*ELN*)
         eoln(context)
     elif q in (8, 9, 10):  # (*WRI*) (*WRR*) (*WRC*)
