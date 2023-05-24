@@ -21,7 +21,7 @@ class Context:
             raise RuntimeError("Store Overflow")
         self.store[self.sp] = value
 
-    def pop(self):
+    def pop(self) -> (str, any):
         value = self.store[self.sp]
         self.sp -= 1
         return value
