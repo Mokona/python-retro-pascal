@@ -24,7 +24,7 @@ class Labels:
             raise RuntimeError("Duplicated label")
 
         if value != -1:  # Forward reference
-            chained_address, _ = self.labels[label_id]
+            chained_address, _ = self.labels[label_id] # TODO: loop can be simpler
             while chained_address != -1:
                 c = code[chained_address]
                 chained_address = c.q
