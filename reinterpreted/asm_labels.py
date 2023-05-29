@@ -19,16 +19,14 @@ class Labels:
         return value
 
     def declare(self, label_id, label_value, code):
-        value, status = self.labels[label_id]
+        chained_address, status = self.labels[label_id]
         if status == 'DEFINED':
             raise RuntimeError("Duplicated label")
 
-        if value != -1:  # Forward reference
-            chained_address, _ = self.labels[label_id] # TODO: loop can be simpler
-            while chained_address != -1:
-                c = code[chained_address]
-                chained_address = c.q
-                c.q = label_value
+        while chained_address != -1:  # Forward reference
+            c = code[chained_address]
+            chained_address = c.q
+            c.q = label_value
 
         self.labels[label_id] = (label_value, 'DEFINED')
 
