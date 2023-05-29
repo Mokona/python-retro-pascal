@@ -56,7 +56,7 @@ def assemble(line, pc, store, labels: Labels):
     q = 0
 
     if op in (17, 18, 19, 20, 21, 22):  # (*EQU,NEQ,GEQ,GRT,LEQ,LES*)
-        p = [0, 1, 2, 3, 4, 5]['AIRBSM'.index(line[0])] # TODO: jut the index
+        p = 'AIRBSM'.index(line[0])
         if p == 5:
             q, _ = string_buffer.parse_integer(line[1:])
     elif op in (0, 2, 4):  # (*LOD,STR,LDA*)
@@ -69,7 +69,7 @@ def assemble(line, pc, store, labels: Labels):
     elif op == 11:  # (*MST*)
         p, _ = string_buffer.parse_integer(line)
     elif op == 14:  # (*RET*)
-        p = [0, 1, 2, 3, 4, 5]['PIRCBA'.index(line[0])] # TODO: just the index
+        p = 'PIRCBA'.index(line[0])
     elif op in (1, 3, 5, 9, 10, 16, 55, 57):  # (*LDO,SRO,LAO,IND,INC,IXA,MOV,DEC*)
         q, _ = string_buffer.parse_integer(line)
     elif op in (13, 23, 24, 25):  # (*ENT,UJP,FJP,XJP*)
