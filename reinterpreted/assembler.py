@@ -118,7 +118,7 @@ def assemble(line, pc, store, labels: Labels):
         lb, line = string_buffer.parse_integer(line[1:])
         ub, _ = string_buffer.parse_integer(line)
 
-        store.add_boundary_constant((lb, ub)) # TODO: no return value? probably missing q =
+        q = store.add_boundary_constant((lb, ub))
     elif op == 56:  # (*LCA*)
         line = line[1:]
         data = [ord(ch) for ch in line[:line.index("'")]]
