@@ -92,7 +92,7 @@ def write_to_file(context, q):
     v2 = context.store.get_value(context.sp - 1)
 
     stream = get_stream(context, file_id)
-    if q == 10 and t != 'CHAR':
+    if q == 10 and t != 'CHAR':  # Is this really a valid type?
         v1 = chr(v1)
     stream.write(f"{v1:>{v2}}")
 
@@ -499,6 +499,7 @@ def interpret(input_stream, output_stream, input_file, output_file, code, store)
     initialize_files(context)
 
     split_op_func = [ex0, ex1, ex2, ex3]
+    count = 80
 
     while context.running:
         c = code[context.pc]
@@ -506,6 +507,12 @@ def interpret(input_stream, output_stream, input_file, output_file, code, store)
         p = c.p
         q = c.q
 
+        # print(f"{context.pc:10} {op:10}{p:10} {q:10}")
+
         context.pc += 1
 
         split_op_func[op // 16](op, p, q, context)
+
+        # count-=1
+        # if count == 0:
+        #     context.running = False
